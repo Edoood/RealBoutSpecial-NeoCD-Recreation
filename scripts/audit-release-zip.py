@@ -39,7 +39,7 @@ def main():
         subprocess.run(["gh", "api", "-H", "Accept: application/octet-stream", "/repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311"], stdout=target, check=True)
     with open(zip_path, "rb") as f:
         prefix = f.read(4)
-        if prefix != b"PK\\x03\\x04":
+        if prefix != bytes((80, 75, 3, 4)):
             f.seek(0)
             sample = f.read(200).decode("utf-8", errors="replace")
             raise RuntimeError("Asset endpoint did not return ZIP. Response preview: " + repr(sample))
