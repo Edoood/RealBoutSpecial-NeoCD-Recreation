@@ -53,7 +53,17 @@ foreach($test in $tests) {
   $text | Set-Content -LiteralPath $copy -Encoding UTF8
   $results+=("{0}: exit={1}, log={2}" -f $test,$p.ExitCode,$copy)
   if($p.ExitCode -ne 0){Write-Host ($results -join "`n");throw "Falha no teste $test. Verifique o log."}
-  if($test -eq '--widescreen-test' -and $text -notmatch 'WIDESCREEN_TOGGLE_PASS') {throw "Teste terminou sem registrar WIDESCREEN_TOGGLE_PASS: $copy"}
+  if($test -eq '--widescreen-test') {
+    if($text -notmatch 'WIDESCREEN_TOGGLE_PASS') {throw "Teste terminou sem registrar WIDESCREEN_TOGGLE_PASS: $copy"}
+    if($text -notmatch 'WIDESCREEN_VISUAL_DIAGNOSTIC') {throw "Teste nao gerou diagnostico visual: $copy"}
+    foreach($filename in @('widescreen-320.ppm','widescreen-426.ppm')) {
+      $img=Join-Path $testRuntime $filename
+      if(!(Test-Path -LiteralPath $img -PathType Leaf) -or (Get-Item -LiteralPath $img).Length -lt 1000) {
+        throw "Captura visual ausente ou vazia: $img"
+      }
+      Write-Host "Captured raw emulated frame: $img"
+    }
+  }
   if($test -eq '--self-test' -and $text -notmatch 'PASS: direct boot') {throw "Self-test nao informou sucesso: $copy"}
 }
 $results -join "`n" | Set-Content -LiteralPath (Join-Path $dest 'test-results.txt') -Encoding UTF8
