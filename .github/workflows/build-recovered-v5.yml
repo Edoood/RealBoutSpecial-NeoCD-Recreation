@@ -76,6 +76,30 @@ jobs:
           Get-Content -LiteralPath $report
           if ($missing.Count) { throw "Core is missing $($missing.Count) required exports. See compatibility-report.txt." }
 
+      - name: Stage isolated player and core for future Windows validation
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path (Get-Location) 'test-package'
+          $runtime = Join-Path $stage 'rffs-runtime'
+          New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+          Copy-Item -LiteralPath './runtime/RFFS-Online-v5.exe' -Destination $stage
+          Copy-Item -LiteralPath './runtime/SDL3.dll' -Destination $stage
+          Copy-Item -LiteralPath './core-build/rffs_core.dll' -Destination (Join-Path $runtime 'rffs_wide_v5.dll')
+          Copy-Item -LiteralPath './runtime/compatibility-report.txt' -Destination $stage
+          @'
+          EXPERIMENTAL RFFS V5 - NOT A GAME RELEASE
+          This is a separately reconstructed build, not the working V6.
+          Do NOT copy these binaries over the working V6 installation.
+          The compiled core is staged under the DLL name expected by the recovered player.
+          Contains NO game CHD, BIOS, Steam SDK DLL, configuration, or protected savestate.
+          Functional startup, video, audio, GGPO/Steamworks, and V6 save-state compatibility
+          have NOT been validated. Use only in an isolated Windows test folder.
+          The V6 savestate may be incompatible because the player fingerprints the DLL bytes.
+          '@ | Set-Content -LiteralPath (Join-Path $stage 'READ-ME-EXPERIMENTAL.txt') -Encoding UTF8
+          Get-ChildItem -Path $stage -Recurse -File | Select-Object FullName, Length
+
       - name: Upload experimental binaries (never publish as a release)
         if: always()
         uses: actions/upload-artifact@v4
@@ -84,5 +108,6 @@ jobs:
           path: |
             recovered-v5/runtime/**
             recovered-v5/core-build/*.dll
+            recovered-v5/test-package/**
           if-no-files-found: warn
           retention-days: 7
