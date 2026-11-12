@@ -1,7 +1,7 @@
 param([string]$OutputDirectory="$PSScriptRoot/runtime", [switch]$Widescreen)
 $ErrorActionPreference='Stop'
 $buildDirectory=Join-Path $PSScriptRoot 'player-build'
-& cmake -S (Join-Path $PSScriptRoot 'player') -B $buildDirectory -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release
+& cmake -S (Join-Path $PSScriptRoot 'player') -B $buildDirectory -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Release
 if($LASTEXITCODE -ne 0){throw 'Falha ao preparar a compilação'}
 & cmake --build $buildDirectory --parallel 4
 if($LASTEXITCODE -ne 0){throw 'Falha ao compilar o aplicativo'}
