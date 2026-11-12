@@ -6,13 +6,11 @@ on:
     branches: [main]
     paths:
       - 'src/**'
-      - 'assets/**'
       - 'scripts/**'
       - '.github/workflows/build-windows.yml'
   pull_request:
     paths:
       - 'src/**'
-      - 'assets/**'
       - 'scripts/**'
       - '.github/workflows/build-windows.yml'
 
@@ -27,14 +25,11 @@ jobs:
       - name: Build with Microsoft C++ compiler
         shell: cmd
         run: call scripts\build-msvc.cmd
-      - name: Package launcher without ROM/BIOS
+      - name: Package launcher binary for review
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path staging/Support | Out-Null
-          Copy-Item build/RealBoutLauncher.exe staging/
-          Copy-Item assets/banner.bmp staging/Support/
-          Compress-Archive -Path staging/* -DestinationPath RealBoutLauncher-windows-x64.zip -Force
-      - name: Upload build artifact for review
+          Compress-Archive -Path build/RealBoutLauncher.exe -DestinationPath RealBoutLauncher-windows-x64.zip -Force
+      - name: Upload test artifact (launcher only, not a playable game)
         uses: actions/upload-artifact@v4
         with:
           name: RealBoutLauncher-windows-x64
