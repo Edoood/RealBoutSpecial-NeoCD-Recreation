@@ -37,6 +37,45 @@ jobs:
         run: |
           ./prepare-dependencies.ps1 -Build
 
+      - name: Verify experimental core exports and runtime layout
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $core = Join-Path (Get-Location) 'core-build/rffs_core.dll'
+          $player = Join-Path (Get-Location) 'runtime/RFFS-Online-v5.exe'
+          $report = Join-Path (Get-Location) 'runtime/compatibility-report.txt'
+          if (!(Test-Path -LiteralPath $core)) { throw "Core DLL missing: $core" }
+          if (!(Test-Path -LiteralPath $player)) { throw "Experimental player EXE missing: $player" }
+          $exports = (& dumpbin.exe /exports $core | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw 'dumpbin could not inspect core exports' }
+          $required = @(
+            'retro_set_environment','retro_set_video_refresh','retro_set_audio_sample',
+            'retro_set_audio_sample_batch','retro_set_input_poll','retro_set_input_state',
+            'retro_set_controller_port_device','retro_init','retro_load_game_special',
+            'retro_get_system_av_info','retro_run','retro_reset','retro_serialize_size',
+            'retro_serialize','retro_unserialize','retro_unload_game','retro_deinit',
+            '?nNeoScreenWidth@@3HA','nBurnPitch','nBurnBpp'
+          )
+          $optional = @('?SekGetPC@@YAIH@Z','?diag_input@@3PEAEEA','?NeoJoy1@@3PAEA','?NeoButton1@@3PAEA')
+          $missing = @($required | Where-Object { $exports -notmatch [regex]::Escape($_) })
+          $optionalMissing = @($optional | Where-Object { $exports -notmatch [regex]::Escape($_) })
+          $lines = @(
+            'EXPERIMENTAL BUILD - NOT A FUNCTIONAL GAME TEST',
+            "Core: $core",
+            "Player: $player",
+            "Required exports checked: $($required.Count)",
+            "Missing required: $($missing -join ', ')",
+            "Missing diagnostic/optional: $($optionalMissing -join ', ')",
+            'The player expects rffs-runtime/rffs_wide_v5.dll; this workflow creates rffs_core.dll.',
+            'Do not replace the original V6 executable, DLL, protected savestate or Release ZIP.',
+            'The protected savestate may be rejected because its compatibility key hashes the DLL.',
+            'Steamworks, CD playback, widescreen and game startup are NOT tested here.'
+          )
+          $lines | Set-Content -LiteralPath $report -Encoding UTF8
+          Get-Content -LiteralPath $report
+          if ($missing.Count) { throw "Core is missing $($missing.Count) required exports. See compatibility-report.txt." }
+
       - name: Upload experimental binaries (never publish as a release)
         if: always()
         uses: actions/upload-artifact@v4
