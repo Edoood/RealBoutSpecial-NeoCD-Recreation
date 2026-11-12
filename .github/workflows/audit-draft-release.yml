@@ -1,0 +1,32 @@
+name: Audit original V6 draft ZIP (read-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-draft-release.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-original-zip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout repository (does not change release)
+        uses: actions/checkout@v4
+      - name: Verify original draft Release ZIP and write inventory
+        run: python3 scripts/audit-release-zip.py
+      - name: Upload audit report only (no game files)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-original-zip-audit
+          path: release-zip-audit/AUDIT_REPORT.md
+          if-no-files-found: warn
+          retention-days: 30
