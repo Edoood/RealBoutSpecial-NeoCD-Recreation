@@ -32,10 +32,14 @@ Essas são **referências históricas fornecidas nos arquivos recuperados**, nã
 4. Compilar o núcleo com CMake, Ninja e compilador Windows compatível.
 5. Compilar o player com os arquivos `rffs_*.cpp` e as bibliotecas correspondentes.
 
-**Etapa 5 ainda não está reproduzível a partir deste repositório:** o script `build_player.ps1` aponta para `player/CMakeLists.txt`, que não foi localizado. O projeto original também referenciava recursos auxiliares como `rffs.ico`.
+**Atualização:** um `player/CMakeLists.txt` foi reconstruído com os arquivos de player recuperados, além de `prepare-dependencies.ps1` para baixar versões históricas de FBNeo, GGPO, ImGui e SDL3. **Essa reconstrução ainda não foi compilada ou validada** e pode exigir ajustes de API, opções do compilador ou dependências. O projeto original também referenciava recursos auxiliares como `rffs.ico`.
 
 ## Integridade e compatibilidade
 
 Os binários do ZIP funcional **não devem ser substituídos** por novos executáveis até que exista uma compilação testada. Mesmo compilando as fontes V5, compatibilidade com o save state e com o protocolo do Netplay da V6 precisa ser verificada.
 
 A publicação das fontes e patches ajuda a cumprir exigências de transparência, mas por si só não atesta conformidade com todas as licenças nem resolve condições de redistribuição do Steamworks ou possíveis dados protegidos no save state.
+
+## Reconstrução experimental (sem substituir a Release)
+
+Na pasta `recovered-v5` do repositório, em uma cópia de desenvolvimento, use `powershell -ExecutionPolicy Bypass -File .\prepare-dependencies.ps1 -Build`. O script obtém as revisões indicadas em `DEPENDENCIAS.txt`, aplica patches e tenta compilar o núcleo e o player. Requer Git, CMake, Ninja, clang-cl e Python, além das ferramentas de build para Windows. **Não executado nem validado neste ambiente.** Não substitua os arquivos da Release por um build experimental: a compatibilidade de savestate e Netplay exige testes próprios.
