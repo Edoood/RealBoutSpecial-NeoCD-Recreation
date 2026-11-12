@@ -38,8 +38,11 @@ def main():
     with open(zip_path, "wb") as target:
         subprocess.run(["gh", "api", "-H", "Accept: application/octet-stream", "/repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311"], stdout=target, check=True)
     with open(zip_path, "rb") as f:
-        if f.read(4) != b"PK\\x03\\x04":
-            raise RuntimeError("Asset endpoint did not return a ZIP archive; no Release files were changed")
+        prefix = f.read(4)
+        if prefix != b"PK\\x03\\x04":
+            f.seek(0)
+            sample = f.read(200).decode("utf-8", errors="replace")
+            raise RuntimeError("Asset endpoint did not return ZIP. Response preview: " + repr(sample))
     actual = sha256_file(zip_path)
     rows = [
         "# Read-only audit of the original draft Release ZIP",
