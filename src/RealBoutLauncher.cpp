@@ -1,4 +1,6 @@
 
+#define UNICODE
+#define _UNICODE
 #include <windows.h>
 #include <commdlg.h>
 #include <shlwapi.h>
