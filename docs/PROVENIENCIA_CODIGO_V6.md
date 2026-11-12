@@ -98,3 +98,9 @@ O runner carregou `rffs_core.dll` com `ctypes.CDLL`, chamou `retro_api_version()
 | Compatibilidade de áudio e Netplay | **Não testada** | Não faz parte dos testes de estrutura; não alterar o sistema multiplayer funcional |
 
 **Política de segurança:** não substituir os binários V6 da Release, não trocar a DLL em instalações funcionais e não modificar o save state protegido. O pacote experimental é apenas um artefato separado, sem jogo/BIOS/save.
+
+## Validação do pacote experimental sem executar o jogo
+
+A execução [GitHub Actions 43259089244](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43259089244) **terminou com sucesso** depois da correção da coleta de código de saída de processos Windows GUI. Foram aprovados: (1) rebuild do core com o patch recuperado; (2) carregamento da DLL e chamadas da API libretro; (3) teste `--check-package` do player reconstruído com DLL e SDL3 presentes; (4) teste negativo com DLL deliberadamente ausente em uma pasta temporária, retornando código 2, sem iniciar jogo nem Steam.
+
+Também foi recuperado no player `--widescreen-test`, que executa alternância 320→426→320 com comparação da RAM do jogo, e `--self-test`, que verifica boot, áudio e reprodução de estado dentro do próprio build. Estes dois testes exigem o CHD e a BIOS e **não foram executados** pelo GitHub Actions; para isso foi adicionado o script [`recovered-v5/test-widescreen-isolated.ps1`](../recovered-v5/test-widescreen-isolated.ps1), que exige uma pasta nova e usa apenas cópias locais dos arquivos do usuário. A V6, o estado protegido e o multiplayer continuam intocados.
