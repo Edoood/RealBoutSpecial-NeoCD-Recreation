@@ -1,0 +1,49 @@
+name: Experimental V5 player build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'recovered-v5/**'
+      - '.github/workflows/build-recovered-v5.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  recover-and-build:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Configure MSVC and clang-cl environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Check development tools
+        shell: pwsh
+        run: |
+          git --version
+          python --version
+          cmake --version
+          ninja --version
+          clang-cl --version
+
+      - name: Fetch pinned source and build reconstructed V5
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          ./prepare-dependencies.ps1 -Build
+
+      - name: Upload experimental binaries (never publish as a release)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rffs-v5-experimental-unverified
+          path: |
+            recovered-v5/runtime/**
+            recovered-v5/core-build/*.dll
+          if-no-files-found: warn
+          retention-days: 7
