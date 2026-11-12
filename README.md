@@ -35,9 +35,13 @@ Projeto comunitário para **Windows** baseado na **emulação da versão Neo Geo
 
 ## Distribuição e código-fonte
 
-Este repositório destina-se ao launcher e à documentação do projeto. O launcher não contém nem recompila o código original do jogo.
+O repositório contém o [código-fonte do launcher](src/RealBoutLauncher.cpp), [código e patches recuperados da V5](recovered-v5/README.md), documentação e [licenças de terceiros](THIRD_PARTY_LICENSES/). O projeto utiliza emulação; o launcher não recompila nativamente o jogo original.
 
-A publicação de executáveis do jogo, bibliotecas de terceiros e do save state depende da verificação das respectivas permissões de redistribuição. O estado de jogo usado para desbloquear personagens EX precisa ser mantido compatível com a versão específica dos componentes de execução.
+**Importante:** as fontes recuperadas da V5 já foram compiladas experimentalmente, mas **não foi demonstrado que correspondem exatamente ao executável e à DLL da V6 funcional**. Uma compilação bem-sucedida não equivale a comprovação dos direitos de redistribuição.
+
+O ZIP da Release `v1.0.0` permanece em **rascunho** e não deve ser considerado uma distribuição aprovada. O [inventário auditado do pacote](docs/AUDITORIA_ZIP_ORIGINAL_V6.md) confirmou que **as licenças não acompanham o ZIP atual** e que ele contém um estado de jogo cujos direitos de redistribuição precisam de conferência. Consulte a [revisão de licenças e pendências](docs/REVISAO_LICENCAS.md) antes de qualquer publicação de binários.
+
+Nenhum desses documentos altera o ZIP original. A versão V6 testada deve permanecer preservada, sem substituição por uma reconstrução V5.
 
 ## Estado dos testes
 
