@@ -7,6 +7,7 @@ on:
     paths:
       - 'recovered-v5/FBNeo-widescreen-v6-revision.patch'
       - 'recovered-v5/smoke_core.py'
+      - 'recovered-v5/rffs_player.cpp'
       - '.github/workflows/build-widescreen-revision.yml'
 
 permissions:
