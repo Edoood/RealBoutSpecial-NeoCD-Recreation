@@ -9,7 +9,7 @@ on:
       - 'scripts/audit-release-zip.py'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inspect-original-zip:
