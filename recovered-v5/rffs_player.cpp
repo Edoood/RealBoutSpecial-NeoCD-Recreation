@@ -115,6 +115,13 @@ static void style(){ImGui::StyleColorsDark();auto& s=ImGui::GetStyle();s.WindowR
 int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR,int){
  SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
  wchar_t exe[32768];GetModuleFileNameW(nullptr,exe,32768);fs::path root=fs::path(exe).parent_path();int argc=0;auto argv=CommandLineToArgvW(GetCommandLineW(),&argc);for(int i=1;i<argc;++i){if(!wcscmp(argv[i],L"--input-service")&&i+1<argc){auto parent=wcstoul(argv[i+1],nullptr,10);LocalFree(argv);return rffs::inputbridge::Service(parent);}if(!wcscmp(argv[i],L"--hotplug-test")){hotplugTest=true;testing=true;}if(!wcscmp(argv[i],L"--widescreen-test")){widescreenTest=true;testing=true;}if(!wcscmp(argv[i],L"--prepare-test")){preparationTest=true;testing=true;}if(!wcscmp(argv[i],L"--start-input-test")){startInputTest=true;testing=true;}if(!wcscmp(argv[i],L"--d3d11-test")){direct3DTest=true;overlayTest=true;menuTest=true;testing=true;gpuTest=true;}if(!wcscmp(argv[i],L"--overlay-test")){overlayTest=true;menuTest=true;testing=true;gpuTest=true;}if(!wcscmp(argv[i],L"--menu-test")){menuTest=true;testing=true;gpuTest=true;}if(!wcscmp(argv[i],L"--steam-check")){steamCheck=true;testing=true;}if(!wcscmp(argv[i],L"--rollback-test")){testing=true;rollbackTest=true;}if(!wcscmp(argv[i],L"--self-test"))testing=true;if(!wcscmp(argv[i],L"--self-test-gpu")){testing=true;gpuTest=true;}}LocalFree(argv);
+ // Read-only packaging check. Does not initialize SDL/Steam or load game, BIOS, CHD or save state.
+ if (wcsstr(GetCommandLineW(), L"--check-package") != nullptr) {
+  const auto corePath = root / L"rffs-runtime/rffs_wide_v5.dll";
+  const auto sdlPath = root / L"SDL3.dll";
+  return (fs::is_regular_file(corePath) && fs::file_size(corePath) > 0 &&
+          fs::is_regular_file(sdlPath) && fs::file_size(sdlPath) > 0) ? 0 : 2;
+ }
  runtime=root/(testing?L"rffs-selftest":L"rffs-runtime");fs::create_directories(runtime/L"system");fs::current_path(root);FILE* output=nullptr;_wfreopen_s(&output,(runtime/(gpuTest?L"modern-gpu-test.log":L"modern.log")).c_str(),L"w",stdout);setvbuf(stdout,nullptr,_IONBF,0);
  try{
  if(steamCheck){check(rffs::steam::Init(),"Steam init");rffs::steam::Create();for(int i=0;i<1000&&!rffs::steam::RoomID();++i){rffs::steam::Tick();Sleep(10);}bool created=rffs::steam::RoomID()!=0;printf("STEAM_CHECK account=%s room=%llu created=%d\n",rffs::steam::Name().c_str(),static_cast<unsigned long long>(rffs::steam::RoomID()),created);rffs::steam::Shutdown();return created?0:1;}
