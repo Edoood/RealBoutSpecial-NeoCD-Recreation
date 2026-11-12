@@ -30,6 +30,11 @@ set(GGPO_BUILD_VECTORWAR OFF CACHE BOOL "" FORCE)
 set(GGPO_BUILD_SDK ON CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory("${GGPO_ROOT}" "${CMAKE_BINARY_DIR}/ggpo-build")
+# GGPO upstream adds MSVC-only /MP and /GL; clang-cl reports those as unused.
+# Suppress this compiler-option diagnostic only for the recovered GGPO target.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  target_compile_options(GGPO PRIVATE -Wno-unused-command-line-argument)
+endif()
 
 add_library(imgui_rffs STATIC
   "${IMGUI_ROOT}/imgui.cpp"
