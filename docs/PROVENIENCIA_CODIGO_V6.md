@@ -60,3 +60,19 @@ O mantenedor recuperou dos arquivos locais do Codex o arquivo `revisao-widescree
 O build separado [Experimental V6 widescreen revision build](../.github/workflows/build-widescreen-revision.yml) aplica **essa versão recuperada do patch apenas numa cópia temporária do ambiente GitHub Actions** e compila um novo artefato experimental. O patch V5 original e todos os arquivos da Release V6 permanecem intocados.
 
 **Limite da conclusão:** encontrar o símbolo no fonte recuperado é evidência concreta da origem da funcionalidade, mas **ainda não prova que o patch é integralmente correspondente à DLL V6** nem garante que a compilação experimental seja compatível com o save state. Não substituir DLL/EXE da V6.
+
+## Resultado da recompilação com o patch recuperado (12/11/2026)
+
+**O workflow de compilação [43160858588](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43160858588) terminou com sucesso.** Os fontes com `RffsWideSprites` foram aplicados a uma árvore FBNeo isolada e a nova DLL experimental foi compilada. O ZIP da V6 e os arquivos de Release não foram alterados.
+
+A comparação direta com a DLL da V6 também foi concluída com sucesso em [GitHub Actions 43229497860](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43229497860):
+
+| Métrica | V6 original | DLL recompilada com patch recuperado |
+| --- | ---: | ---: |
+| Exportações | 2.834 | 2.836 |
+| Exportações compartilhadas | 2.826 | 2.826 |
+| Exportações exclusivas | 8 | 10 |
+| Tamanho (bytes) | 8.175.616 | 8.077.824 |
+| SHA-256 | `61a02a4c4ee0150423b5a15180b1652c88793a006a3c8465fc819dce49bc7434` | `fbbc3a38abb83fcf6d2e883b89797f00fc437327e18a59332a662d3e2008d5a8` |
+
+**Diferença eliminada:** o símbolo C++ `?RffsWideSprites@@3PAURffsWideSprite@@A`, que antes era exclusivo da DLL V6, agora aparece na DLL reconstruída. As oito exportações ainda exclusivas da V6 possuem nomes decorados de rotinas internas STL/C++; não se pode deduzir delas alterações na lógica do jogo. Esse resultado não demonstra correspondência integral dos fontes nem funcionalidade de save state ou Netplay. A DLL recompilada permanece isolada, e não deve ser substituída no pacote funcional.
