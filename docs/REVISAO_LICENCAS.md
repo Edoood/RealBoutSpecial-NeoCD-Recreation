@@ -12,9 +12,9 @@ Este documento acompanha o projeto para registrar as condições que devem ser a
 | `Jogar Real Bout Online.exe` | Executável do projeto; disponibilizar o código-fonte completo e identificar dependências de terceiros. |
 | `rffs_wide_v5.dll` | DLL modificada com referências a FBNeo; disponibilizar código-fonte correspondente e respeitar licença FBNeo. |
 | `SDL3.dll` | Biblioteca SDL, geralmente licenciada sob zlib; conservar avisos pertinentes. |
-| `steam_api64.dll` | Biblioteca proprietária Steamworks; verificar permissão de distribuição nos termos do SDK. |
+| `steam_api64.dll` | A documentação Valve admite redistribuir a DLL com jogos Steamworks; é necessário confirmar que a autorização/termos contratuais se aplicam a este projeto. Permissão sobre a DLL não implica permissão para usar o AppID 480 em publicação. |
 | `steam_appid.txt` | AppID 480 é o aplicativo de exemplo Spacewar, não um AppID de produção do projeto. |
-| `vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll` | Verificar termos de redistribuição Microsoft Visual C++. |
+| `vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll` | A Microsoft condiciona a distribuição desses binários a licenças do Visual Studio e lista REDIST. Conferir se as cópias e sua distribuição estão cobertas; alternativa futura é instalação do pacote oficial VC++ Redistributable, se compatível, sem tocar na V6 original. |
 | `estado-inicial-protegido.rffsstate` | Save state de ~9 MB; ainda não foi comprovado que não contém material protegido do jogo. |
 | `ngcd_rbffspec.fs` | Amostra fornecida pelo mantenedor: 16 KB preenchidos por zeros; sem dados de jogo identificados nessa amostra. |
 | `gamecontrollerdb.txt` e arte/banner | Confirmar origem e preservar créditos/licenças aplicáveis. |
@@ -77,3 +77,13 @@ A **V6 funcional permanece a versão oficial**. A Release v1.0.0 deve permanecer
 O ZIP da Release foi comparado com a cópia funcional do Google Drive por **SHA-256 idêntico**. A inspeção confirmou 15 arquivos, nenhum arquivo de licença/aviso separado no pacote, nenhuma ROM/BIOS com os nomes conhecidos e presença do estado inicial protegido. Há divergência de tamanho entre o executável do anexo (1.106.432 bytes) e outra cópia funcional registrada no histórico (1.192.960 bytes); a equivalência de binários ainda requer verificação. Relatório integral: [AUDITORIA_ZIP_ORIGINAL_V6.md](AUDITORIA_ZIP_ORIGINAL_V6.md).
 
 **A inclusão de licenças no repositório não corrige sua ausência no ZIP que está anexado.** Para manter a V6 original intacta, quaisquer mudanças no pacote devem ocorrer apenas em uma cópia separada, após a verificação dos direitos sobre o estado, do código-fonte correspondente e das demais dependências.
+
+## Esclarecimentos de fontes oficiais (12/11/2026)
+
+- A [documentação oficial do Steamworks Spacewar](https://partner.steamgames.com/doc/sdk/api/example?l=brazilian) identifica **480 como o AppID do aplicativo de exemplo**, e afirma que `steam_api.dll` pode acompanhar jogos Steamworks. **Não afirma que 480 pode ser reutilizado livremente em produtos públicos de terceiros**. A situação do projeto requer validação dos termos aplicáveis, sem necessidade de alterar o jogo durante a análise.
+- A [Microsoft](https://learn.microsoft.com/pt-br/cpp/windows/redistributing-visual-cpp-files) afirma que redistribuição de runtime VC++ está sujeita aos termos de licença do Visual Studio e a listas REDIST. É preciso confirmar os direitos de redistribuição das DLLs presentes no ZIP. A [alternativa oficial de redistributable x64](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) pode ser avaliada para um **pacote futuro** após teste; isso não altera o ZIP V6 atual.
+- A [licença oficial FBNeo](https://github.com/finalburnneo/FBNeo/blob/master/src/license.txt) exige a licença integral, publicação das modificações e uso não comercial, entre outras condições. A licença existente no repositório deve ser conferida quanto à integridade e incluída no material efetivamente distribuído. A cópia dentro do repositório não modifica o ZIP anexado.
+
+### Decisão de manutenção
+
+Manter o **ZIP original da V6 como referência intocada** e **não declarar a Release pronta** enquanto faltarem a licença no pacote distribuído, fontes correspondentes à V6, avaliação do save state e confirmação de direitos sobre os componentes redistribuídos. Uma eventual cópia corrigida de distribuição, se desejada, é um novo arquivo, não uma substituição silenciosa do pacote funcional.
