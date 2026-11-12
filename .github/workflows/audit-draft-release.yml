@@ -23,11 +23,33 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify original draft Release ZIP and write inventory
         run: python3 scripts/audit-release-zip.py
-      - name: Upload audit report only (no game files)
+      - name: Prepare separate license-included ZIP (preserve all original game file hashes)
+        run: python3 scripts/prepare-v6-license-copy.py release-zip-audit/Real.Bout.Special.NeoCD.Recreation.v1.0.zip
+      - name: Upload separate ZIP to existing DRAFT Release only
+        shell: bash
+        run: |
+          set -euo pipefail
+          zip="release-zip-audit/Real.Bout.Special.NeoCD.Recreation.v1.0-LICENCAS-COPIA-NAO-PUBLICAR.zip"
+          name="Real.Bout.Special.NeoCD.Recreation.v1.0-LICENCAS-COPIA-NAO-PUBLICAR.zip"
+          existing=$(gh api repos/"${GH_REPO}"/releases/442352804/assets --jq ".[] | select(.name == \"$name\") | .id")
+          if [ -n "$existing" ]; then
+            echo "Separate file already exists in draft Release; leaving it unchanged."
+          else
+            curl --fail --silent --show-error --location --retry 3 \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              --header "Accept: application/vnd.github+json" \
+              --header "Content-Type: application/zip" \
+              --data-binary @"$zip" \
+              "https://uploads.github.com/repos/${GH_REPO}/releases/442352804/assets?name=$name" > release-zip-audit/upload-response.json
+            python3 -c 'import json; x=json.load(open("release-zip-audit/upload-response.json")); assert x["name"].endswith("-NAO-PUBLICAR.zip"); print("DRAFT asset uploaded, ID:", x["id"], "bytes:", x["size"])'
+          fi
+      - name: Upload audit report and separate ZIP as Actions artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v6-original-zip-audit
-          path: release-zip-audit/AUDIT_REPORT.md
+          name: v6-license-copy-and-audit
+          path: |
+            release-zip-audit/AUDIT_REPORT.md
+            release-zip-audit/*-LICENCAS-COPIA-NAO-PUBLICAR.zip
           if-no-files-found: warn
           retention-days: 30
