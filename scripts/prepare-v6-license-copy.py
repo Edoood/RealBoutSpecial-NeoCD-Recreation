@@ -4,6 +4,7 @@ Usage: python scripts/prepare-v6-license-copy.py path/to/original.zip
 """
 from __future__ import annotations
 import hashlib
+import copy
 from pathlib import Path
 import sys
 import zipfile
@@ -72,7 +73,7 @@ def main():
         with zipfile.ZipFile(out, "x", allowZip64=True) as dst:
             for entry in src.infolist():
                 # Copy original entries (including ZipInfo metadata) without modifying content.
-                dst.writestr(entry, src.read(entry))
+                dst.writestr(copy.copy(entry), src.read(entry.filename))
             for p in license_sources:
                 dst.writestr("THIRD_PARTY_LICENSES/" + p.name, p.read_bytes(), compress_type=zipfile.ZIP_DEFLATED)
             dst.writestr("AVISOS_DE_DISTRIBUICAO.txt", NOTES.encode("utf-8"), compress_type=zipfile.ZIP_DEFLATED)
