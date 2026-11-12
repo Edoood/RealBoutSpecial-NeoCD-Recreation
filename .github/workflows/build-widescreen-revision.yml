@@ -124,16 +124,16 @@ jobs:
           $package = Join-Path (Get-Location) 'test-package'
           $player = Join-Path $package 'RFFS-Online-v5.exe'
           if (!(Test-Path -LiteralPath $player)) { throw 'Missing experimental player' }
-          & $player --check-package
-          if ($LASTEXITCODE -ne 0) { throw "Package check failed: $LASTEXITCODE" }
+          $ok = Start-Process -FilePath $player -ArgumentList '--check-package' -WorkingDirectory $package -Wait -PassThru
+          if ($ok.ExitCode -ne 0) { throw "Package check failed: $($ok.ExitCode)" }
           Write-Host 'PASS: isolated experimental player package layout'
           # Negative assertion in a separate throwaway copy only.
           $bad = Join-Path $env:RUNNER_TEMP 'rffs-package-negative'
           New-Item -ItemType Directory -Force -Path $bad | Out-Null
           Copy-Item -LiteralPath $player -Destination $bad
           Copy-Item -LiteralPath (Join-Path $package 'SDL3.dll') -Destination $bad
-          & (Join-Path $bad 'RFFS-Online-v5.exe') --check-package
-          if ($LASTEXITCODE -ne 2) { throw "Missing-DLL negative case should return 2; got $LASTEXITCODE" }
+          $rejected = Start-Process -FilePath (Join-Path $bad 'RFFS-Online-v5.exe') -ArgumentList '--check-package' -WorkingDirectory $bad -Wait -PassThru
+          if ($rejected.ExitCode -ne 2) { throw "Missing-DLL negative case should return 2; got $($rejected.ExitCode)" }
           Write-Host 'PASS: incomplete test package is rejected without launching game'
 
       - name: Upload experimental binaries (never publish as a release)
