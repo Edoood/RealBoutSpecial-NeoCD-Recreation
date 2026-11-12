@@ -1,0 +1,10 @@
+Fontes locais v5. Leia WIDESCREEN.md para os passos do core e do player.
+Dependências:
+FBNeo: https://github.com/libretro/FBNeo commit 9d82650bb9591966987a4c36ae8a1409ce0d5d68
+Aplique FBNeo-widescreen.patch dentro de FBNeo/.
+GGPO: https://github.com/pond3r/ggpo commit 7ddadef8546a7d99ff0b3530c6056bc8ee4b9c0a
+Clone em ggpo/ e aplique GGPO-Steam.patch dentro de ggpo/ antes do build.
+ImGui: https://github.com/ocornut/imgui commit 6d910d5487d11ca567b61c7824b0c78c569d62f0
+SDL 3.4.18 VC SDK: https://github.com/libsdl-org/SDL/releases/tag/release-3.4.18
+Controller mappings: https://github.com/mdqinc/SDL_GameControllerDB
+Sem ROMs, BIOS ou snapshots do jogo. Não foi publicado nada.
