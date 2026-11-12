@@ -1,0 +1,206 @@
+diff --git a/src/lib/ggpo/backends/p2p.h b/src/lib/ggpo/backends/p2p.h
+index f400f83..a732857 100644
+--- a/src/lib/ggpo/backends/p2p.h
++++ b/src/lib/ggpo/backends/p2p.h
+@@ -22,6 +22,7 @@ public:
+ 
+ 
+ public:
++   int ConfirmedFrame() { return _sync.GetConfirmedFrame(); }
+    virtual GGPOErrorCode DoPoll(int timeout);
+    virtual GGPOErrorCode AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle);
+    virtual GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size);
+diff --git a/src/lib/ggpo/backends/synctest.cpp b/src/lib/ggpo/backends/synctest.cpp
+index 4af0426..4cdefe8 100644
+--- a/src/lib/ggpo/backends/synctest.cpp
++++ b/src/lib/ggpo/backends/synctest.cpp
+@@ -169,7 +169,7 @@ SyncTestBackend::RaiseSyncError(const char *fmt, ...)
+    puts(buf);
+    OutputDebugStringA(buf);
+    EndLog();
+-   DebugBreak();
++   throw std::runtime_error(buf);
+ }
+ 
+ GGPOErrorCode
+diff --git a/src/lib/ggpo/network/udp.cpp b/src/lib/ggpo/network/udp.cpp
+index 5c22504..ac92bb9 100644
+--- a/src/lib/ggpo/network/udp.cpp
++++ b/src/lib/ggpo/network/udp.cpp
+@@ -7,119 +7,12 @@
+ 
+ #include "types.h"
+ #include "udp.h"
+-
+-SOCKET
+-CreateSocket(uint16 bind_port, int retries)
+-{
+-   SOCKET s;
+-   sockaddr_in sin;
+-   uint16 port;
+-   int optval = 1;
+-
+-   s = socket(AF_INET, SOCK_DGRAM, 0);
+-   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&optval, sizeof optval);
+-   setsockopt(s, SOL_SOCKET, SO_DONTLINGER, (const char *)&optval, sizeof optval);
+-
+-   // non-blocking...
+-   u_long iMode = 1;
+-   ioctlsocket(s, FIONBIO, &iMode);
+-
+-   sin.sin_family = AF_INET;
+-   sin.sin_addr.s_addr = htonl(INADDR_ANY);
+-   for (port = bind_port; port <= bind_port + retries; port++) {
+-      sin.sin_port = htons(port);
+-      if (bind(s, (sockaddr *)&sin, sizeof sin) != SOCKET_ERROR) {
+-         Log("Udp bound to port: %d.\n", port);
+-         return s;
+-      }
+-   }
+-   closesocket(s);
+-   return INVALID_SOCKET;
+-}
+-
+-Udp::Udp() :
+-   _socket(INVALID_SOCKET),
+-   _callbacks(NULL)
+-{
+-}
+-
+-Udp::~Udp(void)
+-{
+-   if (_socket != INVALID_SOCKET) {
+-      closesocket(_socket);
+-      _socket = INVALID_SOCKET;
+-   }
+-}
+-
+-void
+-Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
+-{
+-   _callbacks = callbacks;
+-
+-   _poll = poll;
+-   _poll->RegisterLoop(this);
+-
+-   Log("binding udp socket to port %d.\n", port);
+-   _socket = CreateSocket(port, 0);
+-}
+-
+-void
+-Udp::SendTo(char *buffer, int len, int flags, struct sockaddr *dst, int destlen)
+-{
+-   struct sockaddr_in *to = (struct sockaddr_in *)dst;
+-
+-   int res = sendto(_socket, buffer, len, flags, dst, destlen);
+-   if (res == SOCKET_ERROR) {
+-      DWORD err = WSAGetLastError();
+-      Log("unknown error in sendto (erro: %d  wsaerr: %d).\n", res, err);
+-      ASSERT(FALSE && "Unknown error in sendto");
+-   }
+-   char dst_ip[1024];
+-   Log("sent packet length %d to %s:%d (ret:%d).\n", len, inet_ntop(AF_INET, (void *)&to->sin_addr, dst_ip, ARRAY_SIZE(dst_ip)), ntohs(to->sin_port), res);
+-}
+-
+-bool
+-Udp::OnLoopPoll(void *cookie)
+-{
+-   uint8          recv_buf[MAX_UDP_PACKET_SIZE];
+-   sockaddr_in    recv_addr;
+-   int            recv_addr_len;
+-
+-   for (;;) {
+-      recv_addr_len = sizeof(recv_addr);
+-      int len = recvfrom(_socket, (char *)recv_buf, MAX_UDP_PACKET_SIZE, 0, (struct sockaddr *)&recv_addr, &recv_addr_len);
+-
+-      // TODO: handle len == 0... indicates a disconnect.
+-
+-      if (len == -1) {
+-         int error = WSAGetLastError();
+-         if (error != WSAEWOULDBLOCK) {
+-            Log("recvfrom WSAGetLastError returned %d (%x).\n", error, error);
+-         }
+-         break;
+-      } else if (len > 0) {
+-         char src_ip[1024];
+-         Log("recvfrom returned (len:%d  from:%s:%d).\n", len, inet_ntop(AF_INET, (void*)&recv_addr.sin_addr, src_ip, ARRAY_SIZE(src_ip)), ntohs(recv_addr.sin_port) );
+-         UdpMsg *msg = (UdpMsg *)recv_buf;
+-         _callbacks->OnMsg(recv_addr, msg, len);
+-      } 
+-   }
+-   return true;
+-}
+-
+-
+-void
+-Udp::Log(const char *fmt, ...)
+-{
+-   char buf[1024];
+-   size_t offset;
+-   va_list args;
+-
+-   strcpy_s(buf, "udp | ");
+-   offset = strlen(buf);
+-   va_start(args, fmt);
+-   vsnprintf(buf + offset, ARRAY_SIZE(buf) - offset - 1, fmt, args);
+-   buf[ARRAY_SIZE(buf)-1] = '\0';
+-   ::Log(buf);
+-   va_end(args);
+-}
++extern "C" bool rffs_ggpo_send(const void*,int);
++extern "C" int rffs_ggpo_recv(void*,int);
++extern "C" int rffs_ggpo_remote_port();
++Udp::Udp():_socket(INVALID_SOCKET),_callbacks(NULL){}
++Udp::~Udp(){}
++void Udp::Init(uint16,Poll* poll,Callbacks* cb){_callbacks=cb;_poll=poll;_poll->RegisterLoop(this);}
++void Udp::SendTo(char* data,int size,int,struct sockaddr*,int){rffs_ggpo_send(data,size);}
++bool Udp::OnLoopPoll(void*){uint8 bytes[MAX_UDP_PACKET_SIZE];sockaddr_in from{};from.sin_family=AF_INET;from.sin_addr.s_addr=htonl(INADDR_LOOPBACK);from.sin_port=htons(rffs_ggpo_remote_port());for(int i=0;i<256;++i){int n=rffs_ggpo_recv(bytes,sizeof(bytes));if(n<=0)break;if(n>=int(5))_callbacks->OnMsg(from,reinterpret_cast<UdpMsg*>(bytes),n);}return true;}
++void Udp::Log(const char*,...){}
+diff --git a/src/lib/ggpo/network/udp_proto.h b/src/lib/ggpo/network/udp_proto.h
+index 57699aa..c1aaa3b 100644
+--- a/src/lib/ggpo/network/udp_proto.h
++++ b/src/lib/ggpo/network/udp_proto.h
+@@ -53,7 +53,7 @@ public:
+          } network_interrupted;
+       } u;
+ 
+-      UdpProtocol::Event(Type t = Unknown) : type(t) { }
++      Event(Type t = Unknown) : type(t) { }
+    };
+ 
+ public:
+diff --git a/src/lib/ggpo/platform_windows.h b/src/lib/ggpo/platform_windows.h
+index 1d308ce..ff5037e 100644
+--- a/src/lib/ggpo/platform_windows.h
++++ b/src/lib/ggpo/platform_windows.h
+@@ -12,6 +12,9 @@
+ #include <ws2tcpip.h>
+ #include <windows.h>
+ #include <stdio.h>
++#include <mmsystem.h>
++#include <cstdlib>
++#include <stdexcept>
+ #include "types.h"
+ 
+ class Platform {
+@@ -20,7 +23,7 @@ public:  // types
+ 
+ public:  // functions
+    static ProcessID GetProcessID() { return GetCurrentProcessId(); }
+-   static void AssertFailed(char *msg) { MessageBoxA(NULL, msg, "GGPO Assertion Failed", MB_OK | MB_ICONEXCLAMATION); }
++   static void AssertFailed(char *msg) { throw std::runtime_error(msg); }
+    static uint32 GetCurrentTimeMS() { return timeGetTime(); }
+    static int GetConfigInt(const char* name);
+    static bool GetConfigBool(const char* name);
+diff --git a/src/lib/ggpo/sync.h b/src/lib/ggpo/sync.h
+index 46d8c96..d5d51e9 100644
+--- a/src/lib/ggpo/sync.h
++++ b/src/lib/ggpo/sync.h
+@@ -56,6 +56,7 @@ public:
+    void IncrementFrame(void);
+ 
+    int GetFrameCount() { return _framecount; }
++   int GetConfirmedFrame() { return _last_confirmed_frame; }
+    bool InRollback() { return _rollingback; }
+ 
+    bool GetEvent(Event &e);
