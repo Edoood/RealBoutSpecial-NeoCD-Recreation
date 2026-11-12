@@ -2,6 +2,8 @@
 
 **Situação: fontes V5 recuperadas; conformidade da distribuição binária ainda não concluída. Este documento não constitui autorização legal nem certificação de distribuição.**
 
+**Licenças no novo ZIP: CONCLUÍDO.** Permanecem questões separadas sobre fontes V6 e direitos de alguns componentes. A Release segue em rascunho.
+
 Este documento acompanha o projeto para registrar as condições que devem ser atendidas antes de uma publicação pública do pacote binário. A licença oficial do FinalBurn Neo está arquivada em [THIRD_PARTY_LICENSES/FBNeo-license.txt](../THIRD_PARTY_LICENSES/FBNeo-license.txt).
 
 ## Componentes
@@ -22,7 +24,7 @@ Este documento acompanha o projeto para registrar as condições que devem ser a
 
 ## Ações pendentes para liberar uma publicação pública
 
-1. Acrescentar **a licença integral do FBNeo dentro do ZIP da Release**; a cópia no repositório não basta para garantir que acompanhe o binário.
+1. **RESOLVIDO NA CÓPIA COM LICENÇAS:** o segundo ZIP anexado à Release em rascunho inclui a licença integral FBNeo, junto com GGPO, SDL3, ImGui e um aviso de distribuição. O ZIP original permanece inalterado e sem esses avisos.
 2. **Parcialmente atendido:** patches FBNeo/GGPO e fontes V5 recuperados em [`recovered-v5/`](../recovered-v5/README.md); `player/CMakeLists.txt` reconstruído, build Windows experimental e verificação estática de exportações aprovados no [GitHub Actions](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43142102098). **Ainda falta demonstrar correspondência dos fontes com os binários V6 distribuídos**, não apenas compilar uma V5 experimental.
 3. Verificar as condições de distribuição do Steamworks SDK e o uso do AppID de teste `480`.
 4. Conferir o conteúdo do save state para evitar distribuir recursos protegidos do jogo. O arquivo `.fs` fornecido separadamente foi examinado e continha 16 KB de zeros.
@@ -41,7 +43,7 @@ Este documento acompanha o projeto para registrar as condições que devem ser a
 
 - Licenças completas FBNeo, GGPO, ImGui e SDL3 disponíveis na pasta [`THIRD_PARTY_LICENSES`](../THIRD_PARTY_LICENSES/).
 - Código recuperado e documentação de reconstrução histórica em [`recovered-v5/README.md`](../recovered-v5/README.md).
-- **A inclusão desses documentos no repositório não os acrescenta automaticamente ao ZIP já anexado à Release.** A distribuição final deve acompanhá-los.
+- **Atualizado:** uma cópia SEPARADA com as quatro licenças e um aviso já foi criada e anexada à Release em rascunho. O primeiro ZIP original permanece inalterado.
 
 ## Verificação do rascunho da Release v1.0.0
 
@@ -49,7 +51,7 @@ Este documento acompanha o projeto para registrar as condições que devem ser a
 - O texto de apresentação em português e inglês já existe e descreve corretamente a emulação, os recursos, a instalação e que CHD/BIOS não estão incluídos.
 - O conteúdo interno desse ZIP **não foi inspecionado neste procedimento**. Não se pode afirmar que contém todas as licenças, nem que o save state não contém dados protegidos.
 - A compilação da V5 experimental e seu relatório de exportações **não validam a correspondência** com os binários V6. Nada disso exige modificar ou substituir o anexo.
-- **Antes de tornar a Release pública:** conferir os arquivos de licença efetivamente presentes no ZIP, o código-fonte correspondente à V6, os termos dos componentes redistribuídos e o conteúdo/origem do estado inicial protegido. A situação atual não é certificação legal de distribuição.
+- **Antes de tornar a Release pública:** usar como referência a **cópia com licenças**, cujos arquivos originais tiveram hashes preservados no GitHub Actions, e resolver as pendências reais sobre fontes V6 e termos dos componentes; o save state não requer autorização automática por ser um estado salvo. A situação atual não é certificação legal de distribuição.
 
 ## Critérios objetivos para publicação da V6 original
 
@@ -76,7 +78,7 @@ A **V6 funcional permanece a versão oficial**. A Release v1.0.0 deve permanecer
 
 O ZIP da Release foi comparado com a cópia funcional do Google Drive por **SHA-256 idêntico**. A inspeção confirmou 15 arquivos, nenhum arquivo de licença/aviso separado no pacote, nenhuma ROM/BIOS com os nomes conhecidos e presença do estado inicial protegido. Há divergência de tamanho entre o executável do anexo (1.106.432 bytes) e outra cópia funcional registrada no histórico (1.192.960 bytes); a equivalência de binários ainda requer verificação. Relatório integral: [AUDITORIA_ZIP_ORIGINAL_V6.md](AUDITORIA_ZIP_ORIGINAL_V6.md).
 
-**A inclusão de licenças no repositório não corrige sua ausência no ZIP que está anexado.** Para manter a V6 original intacta, quaisquer mudanças no pacote devem ocorrer apenas em uma cópia separada, após a verificação dos direitos sobre o estado, do código-fonte correspondente e das demais dependências.
+**Atualização:** o primeiro ZIP permanece sem arquivos de licença; o segundo ZIP, anexado à mesma Release em rascunho, já inclui FBNeo, GGPO, SDL3 e ImGui, além de aviso. Os direitos relativos às demais dependências ainda precisam de confirmação.
 
 ## Esclarecimentos de fontes oficiais (12/11/2026)
 
@@ -86,23 +88,23 @@ O ZIP da Release foi comparado com a cópia funcional do Google Drive por **SHA-
 
 ### Decisão de manutenção
 
-Manter o **ZIP original da V6 como referência intocada** e **não declarar a Release pronta** enquanto faltarem a licença no pacote distribuído, fontes correspondentes à V6, avaliação do save state e confirmação de direitos sobre os componentes redistribuídos. Uma eventual cópia corrigida de distribuição, se desejada, é um novo arquivo, não uma substituição silenciosa do pacote funcional.
+Manter o **ZIP original da V6 como referência intocada**. A **cópia com licenças foi gerada e anexada ao rascunho**. Não declarar liberação jurídica enquanto faltarem fontes correspondentes à V6 e confirmação das condições dos demais componentes. Save state não requer autorização automaticamente; questões específicas dependem de seu conteúdo.
 
 ## Decisão prática de publicação — pendências reais (12/11/2026)
 
 **A V6 funcional continua sendo a referência. Não é preciso recompilar o jogo novamente, nem obter autorização genérica para criar ou salvar estados do emulador.** Também não se deve declarar o ZIP atual regularizado: ele foi auditado, mas faltam passos específicos.
 
-1. **Obrigação objetiva — licença FBNeo no material distribuído.** A licença exige o texto integral e tornar públicas as modificações ao FBNeo. O arquivo `THIRD_PARTY_LICENSES/FBNeo-license.txt` já existe no repositório; **não existe no ZIP atual**. Resolver numa **nova cópia de distribuição**, preservando o ZIP original como backup. Incluir igualmente os avisos exigidos por SDL e outras dependências que acompanham o executável.
+1. **RESOLVIDO NA CÓPIA COM LICENÇAS — texto FBNeo e avisos de terceiros.** O segundo ZIP foi criado e anexado à Release rascunho, com FBNeo, GGPO, SDL3, ImGui e aviso de distribuição. O primeiro ZIP original permanece inalterado. Isto resolve a **presença desses textos** no pacote novo, mas não a obrigação separada de disponibilizar as modificações correspondentes à V6.
 2. **Obrigação objetiva — código-fonte correspondente à V6.** A V5 recuperada compila, mas **não é prova de correspondência** com o binário V6. Localizar/publicar o código ou patches efetivamente usados no executável e na DLL distribuídos, com referência clara à versão; não exigir binários idênticos bit a bit se o ambiente de compilação diferir, mas demonstrar que os fontes são realmente correspondentes.
 3. **Termos específicos — Steamworks.** A Valve permite redistribuir a biblioteca `steam_api` com jogos Steamworks em condições próprias. O AppID `480` é do aplicativo de exemplo Spacewar; seu uso no nosso projeto **não é automaticamente autorizado** por essa informação. Confirmar autorização aplicável ao lançamento antes de afirmar conformidade. Não alterar o funcionamento do Netplay para realizar essa conferência.
 4. **Redistribuição Microsoft.** As DLLs de runtime VC++ podem ser redistribuídas dentro das condições de licença/REDIST do Visual Studio. Confirmar procedência; um pacote oficial VC++ Redistributable pode ser empregado numa nova distribuição se for necessário e testado.
 5. **Save state — sem autorização automática presumida.** Um arquivo `.rffsstate` não demanda, apenas por ser um save state, uma autorização específica da desenvolvedora do jogo. **Só há uma questão de direitos se o conteúdo reproduzir material protegido de terceiros em grau juridicamente relevante.** A inspeção anterior comprovou presença, tamanho e estrutura, **não comprovou infração** e também não examinou o conteúdo integral; não manter a expressão genérica “obter autorização para save state” como bloqueio independente. Se o arquivo contiver dados protegidos que não possam ser distribuídos, aí será preciso avaliar uma alternativa ou a autorização cabível.
 6. **Outros materiais.** Confirmar a procedência/licenças do banner e do arquivo de mapeamento de controles efetivamente usados.
 
-**Resumo operacional:** não repetir auditorias gerais nem substituir o EXE funcional. Antes de publicar, preparar uma cópia do ZIP com avisos completos e código correspondente, resolver as condições de redistribuição identificadas acima e testar essa cópia. O anexo atual da Release é um rascunho; sua publicação ainda não foi autorizada nem executada. Este documento é uma revisão prática, não parecer jurídico.
+**Resumo operacional:** não repetir auditorias gerais nem substituir o EXE funcional. **A cópia do ZIP com os avisos já está pronta**; antes de publicar, resolver as condições de redistribuição e a correspondência dos fontes V6, além de testar o pacote em Windows. O anexo atual da Release é um rascunho; sua publicação ainda não foi autorizada nem executada. Este documento é uma revisão prática, não parecer jurídico.
 
 ## Preparação de cópia separada com licenças
 
 Foi incluído o utilitário [`scripts/prepare-v6-license-copy.py`](../scripts/prepare-v6-license-copy.py), que recebe o **ZIP original auditado**, exige o SHA-256 exato, verifica os hashes dos principais binários e do save state, copia todas as 15 entradas originais **sem modificar o conteúdo** e adiciona em um **novo ZIP** os textos disponíveis de FBNeo, GGPO, Dear ImGui e SDL3, com `AVISOS_DE_DISTRIBUICAO.txt`. Se o novo arquivo já existir, não o sobrescreve. Não publica nem altera a Release.
 
-O script e as licenças já estão no GitHub, mas **a nova cópia ZIP ainda precisa ser executada/gerada a partir do arquivo original**; a publicação não está liberada porque a presença das licenças não resolve automaticamente código-fonte correspondente, Steamworks/AppID e demais direitos. Não confundir "ferramenta preparada" com "ZIP final criado".
+**Concluído:** o script foi executado pelo GitHub Actions [run 43152764479](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43152764479) com sucesso. A cópia nova foi gerada e anexada à Release como `Real.Bout.Special.NeoCD.Recreation.v1.0-LICENCAS-COPIA-NAO-PUBLICAR.zip` (9.537.637 bytes; SHA-256 `ba55e9700afa590baaaa7c68584aaa00f2dc888b3499835e9e3650e6c3e4f4e2`). O ZIP original permanece anexado separadamente, com o mesmo hash original. A inclusão das licenças não prova as permissões dos demais componentes; o rascunho não foi publicado.
