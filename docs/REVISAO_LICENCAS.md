@@ -50,3 +50,24 @@ Este documento acompanha o projeto para registrar as condições que devem ser a
 - O conteúdo interno desse ZIP **não foi inspecionado neste procedimento**. Não se pode afirmar que contém todas as licenças, nem que o save state não contém dados protegidos.
 - A compilação da V5 experimental e seu relatório de exportações **não validam a correspondência** com os binários V6. Nada disso exige modificar ou substituir o anexo.
 - **Antes de tornar a Release pública:** conferir os arquivos de licença efetivamente presentes no ZIP, o código-fonte correspondente à V6, os termos dos componentes redistribuídos e o conteúdo/origem do estado inicial protegido. A situação atual não é certificação legal de distribuição.
+
+## Critérios objetivos para publicação da V6 original
+
+A **V6 funcional permanece a versão oficial**. A Release v1.0.0 deve permanecer em **rascunho** até que as verificações abaixo sejam documentadas. Recompilar a V5 experimental não é condição para lançar nem comprovação de conformidade da V6.
+
+| Ponto | Evidência disponível | Condição para aprovar |
+| --- | --- | --- |
+| Imagem CHD e BIOS | README e manifesto informam que não acompanham a distribuição; ZIP não foi aberto nesta auditoria. | Conferir a lista interna do anexo e confirmar ausência de arquivos do jogo/BIOS sem autorização. |
+| Licença FBNeo | Texto completo está em `THIRD_PARTY_LICENSES/FBNeo-license.txt` no repositório. | Conferir se o texto integral acompanha efetivamente o binário no material distribuído, além dos avisos das outras bibliotecas. |
+| Código-fonte da V6 | Código do launcher em `src/`; fontes e patches **V5** em `recovered-v5/` compilam; equivalência com os binários **V6** ainda não demonstrada. | Identificar, publicar e associar à versão os fontes e alterações que geraram os binários distribuídos; os patches V5 não bastam sem essa correspondência. |
+| Save state protegido | `estado-inicial-protegido.rffsstate` consta do manifesto, mas seu conteúdo e as permissões de redistribuição não foram validados. | Examinar o conteúdo e obter fundamento para sua redistribuição, especialmente caso inclua dados protegidos do jogo. |
+| Steamworks | `steam_api64.dll` e `steam_appid.txt` são citados no manifesto; o AppID 480 pertence ao aplicativo de exemplo Spacewar. | Confirmar o direito de redistribuir a biblioteca conforme os termos aplicáveis e a autorização/condições de uso do AppID em uma versão pública. Não presumir autorização pelo simples funcionamento. |
+| Outros componentes | SDL, GGPO, ImGui, runtime Visual C++, arquivo de controle e arte foram identificados. | Documentar procedência e anexar os avisos/licenças aplicáveis a cada componente efetivamente distribuído. |
+
+**Status: ainda não certificado para publicação pública.** Isso é uma lista de verificações, não um parecer jurídico. Os resultados positivos de compilação ou testes técnicos não substituem essas verificações. Não alterar o ZIP da Release nem publicar o rascunho automaticamente.
+
+### Fontes primárias consultadas
+
+- [FBNeo — licença oficial](https://github.com/finalburnneo/FBNeo/blob/master/src/license.txt): inclui exigência de publicar modificações, licença integral e restrições de uso comercial/doações.
+- [Valve — exemplo Steamworks/Spacewar](https://partner.steamgames.com/doc/sdk/api/example): identifica o AppID 480 como exemplo e informa condições de distribuição das bibliotecas para jogos Steamworks. Esse texto não concede autorização genérica para reutilizar o identificador 480 em qualquer lançamento.
+- [Valve — documentação do SDK](https://partner.steamgames.com/doc/sdk): verificar condições contratuais concretas para a distribuição da biblioteca proprietária.
