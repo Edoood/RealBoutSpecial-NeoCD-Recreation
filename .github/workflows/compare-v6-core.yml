@@ -28,7 +28,7 @@ jobs:
           New-Item -ItemType Directory -Force originals, experiment | Out-Null
           $zip = Join-Path (Get-Location) 'originals/v6-original.zip'
           # Existing draft asset 737474311, NEVER changed/reuploaded
-          & gh api -H 'Accept: application/octet-stream' 'repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311' | Set-Content -LiteralPath 'originals/v6-original.zip' -AsByteStream
+          & curl.exe --fail --silent --show-error --location --retry 3 --header "Authorization: Bearer $env:GH_TOKEN" --header 'Accept: application/octet-stream' --output "$zip" 'https://api.github.com/repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311'
           if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain draft ZIP' }
           $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($sha -ne 'ed8fc7fa160411aa209cedba0f512ec9a256021ed5a07fdcebdee3741aa7374e') { throw "Original ZIP hash does not match: $sha" }
