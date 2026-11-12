@@ -30,3 +30,25 @@ Para cumprir a obrigação de publicar alterações ao FBNeo, o conteúdo dispon
 ## Não misturar as pendências
 
 A presença de licenças na **nova cópia** já foi resolvida, conforme [revisão de licenças](REVISAO_LICENCAS.md). Este documento trata **apenas da proveniência dos fontes da V6**, não reabre a verificação de licenças ou do save state.
+
+## Comparação estática direta entre DLL original da V6 e DLL reconstruída
+
+**Executada com sucesso em 12/11/2026**, [GitHub Actions 43154546076](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43154546076). O workflow [`compare-v6-core.yml`](../.github/workflows/compare-v6-core.yml) obtém o ZIP **original** de uma Release em rascunho, confirma o SHA-256 original, baixa o binário experimental previamente compilado e compara as exportações com `dumpbin`, sem alterar nem substituir nenhum dos dois ZIPs da Release.
+
+| Medida | DLL V6 distribuída | DLL V5 reconstruída |
+| --- | ---: | ---: |
+| Tamanho | 8.175.616 bytes | 8.054.272 bytes |
+| Número de exportações | 2.834 | 2.835 |
+| Símbolos de exportação em comum | 2.825 | 2.825 |
+| Exportações exclusivas desta DLL | 9 | 10 |
+
+- SHA-256 V6: `61a02a4c4ee0150423b5a15180b1652c88793a006a3c8465fc819dce49bc7434`.
+- SHA-256 V5 reconstruída: `b84dfab5792d51b2c3c46ceeeb19729344dfd35ed770d40bcaa2b49690bcfc6d`.
+- **Oito das nove exportações ausentes na reconstrução têm nomes decorados de rotinas internas de STL/C++** (`vector`, `string`, `ostringstream`), possivelmente influenciados pela versão do compilador ou pelas otimizações.
+- **A nona exportação da V6 não presente na reconstrução é específica do widescreen:** `?RffsWideSprites@@3PAURffsWideSprite@@A` (variável C++ `RffsWideSprites`). O nome não foi encontrado nos arquivos `recovered-v5/FBNeo-widescreen.patch` nem `recovered-v5/rffs_player.cpp`. Portanto, pode haver alterações de código/fonte da V6 ainda não recuperadas.
+- A reconstrução apresenta dez exportações exclusivas, todas identificadas com nomes de rotinas de biblioteca padrão C++ (especialmente `vector` e `ostringstream`).
+- **Conclusão rigorosa:** as interfaces exportadas têm sobreposição elevada, mas não são idênticas. Essa semelhança **não demonstra o código-fonte correspondente à V6 nem a equivalência de comportamento**. Adicionar um símbolo inventado só para igualar a lista seria incorreto e pode causar erro de memória.
+- A reconstrução da V5 já tinha sido compilada e verificada quanto aos 20 símbolos essenciais esperados pelo player recuperado; isso é um resultado separado de compatibilidade estática e não garante o funcionamento da V6.
+- **Próximo trabalho técnico específico:** localizar a definição original de `RffsWideSprites` (e seu tipo/uso) no código que gerou a DLL V6, em vez de repetir a compilação ou substituir a DLL funcional. Se não houver fonte, pode-se comparar outras evidências de comportamento sem apresentar a reconstrução como exata.
+
+**O ZIP original e a cópia com licenças estão preservados. Não foi publicada uma nova DLL.**
