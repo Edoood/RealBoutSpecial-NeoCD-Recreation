@@ -52,3 +52,11 @@ A presença de licenças na **nova cópia** já foi resolvida, conforme [revisã
 - **Próximo trabalho técnico específico:** localizar a definição original de `RffsWideSprites` (e seu tipo/uso) no código que gerou a DLL V6, em vez de repetir a compilação ou substituir a DLL funcional. Se não houver fonte, pode-se comparar outras evidências de comportamento sem apresentar a reconstrução como exata.
 
 **O ZIP original e a cópia com licenças estão preservados. Não foi publicada uma nova DLL.**
+
+## Fonte widescreen adicional recuperada em 12/11/2026
+
+O mantenedor recuperou dos arquivos locais do Codex o arquivo `revisao-widescreen-atual.patch`, preservado no repositório como [`recovered-v5/FBNeo-widescreen-v6-revision.patch`](../recovered-v5/FBNeo-widescreen-v6-revision.patch). Ele contém a **definição e utilização real** de `RffsWideSprite RffsWideSprites[384]`, símbolo que estava ausente do patch V5 e era exportado pela DLL V6 funcional. Também amplia o tratamento de câmera, camadas e atores fora da área original de 320 pixels.
+
+O build separado [Experimental V6 widescreen revision build](../.github/workflows/build-widescreen-revision.yml) aplica **essa versão recuperada do patch apenas numa cópia temporária do ambiente GitHub Actions** e compila um novo artefato experimental. O patch V5 original e todos os arquivos da Release V6 permanecem intocados.
+
+**Limite da conclusão:** encontrar o símbolo no fonte recuperado é evidência concreta da origem da funcionalidade, mas **ainda não prova que o patch é integralmente correspondente à DLL V6** nem garante que a compilação experimental seja compatível com o save state. Não substituir DLL/EXE da V6.
