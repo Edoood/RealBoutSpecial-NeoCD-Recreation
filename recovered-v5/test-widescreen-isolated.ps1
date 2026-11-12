@@ -15,6 +15,11 @@ $chd=(Resolve-Path -LiteralPath $ChdFile).Path
 $bios=(Resolve-Path -LiteralPath $BiosFile).Path
 $dest=[IO.Path]::GetFullPath($OutputFolder)
 if (Test-Path -LiteralPath $dest) { throw "Destino ja existe: $dest. Escolha uma pasta NOVA para impedir sobrescritas." }
+# Never create the experimental directory inside the working game's CHD folder.
+$gameFolder=[IO.Path]::GetFullPath([IO.Path]::GetDirectoryName($chd)).TrimEnd('\') + '\'
+if ($dest.StartsWith($gameFolder,[StringComparison]::OrdinalIgnoreCase)) {
+  throw "Destino dentro da pasta do jogo original. Use uma pasta separada fora de $gameFolder"
+}
 if ([IO.Path]::GetExtension($chd).ToLowerInvariant() -ne '.chd') {throw "Arquivo CHD esperado: $chd"}
 if ([IO.Path]::GetFileName($bios).ToLowerInvariant() -ne 'neocdz.zip') {throw "BIOS neocdz.zip esperada: $bios"}
 $exe=Join-Path $source 'RFFS-Online-v5.exe'
