@@ -76,3 +76,25 @@ A comparação direta com a DLL da V6 também foi concluída com sucesso em [Git
 | SHA-256 | `61a02a4c4ee0150423b5a15180b1652c88793a006a3c8465fc819dce49bc7434` | `fbbc3a38abb83fcf6d2e883b89797f00fc437327e18a59332a662d3e2008d5a8` |
 
 **Diferença eliminada:** o símbolo C++ `?RffsWideSprites@@3PAURffsWideSprite@@A`, que antes era exclusivo da DLL V6, agora aparece na DLL reconstruída. As oito exportações ainda exclusivas da V6 possuem nomes decorados de rotinas internas STL/C++; não se pode deduzir delas alterações na lógica do jogo. Esse resultado não demonstra correspondência integral dos fontes nem funcionalidade de save state ou Netplay. A DLL recompilada permanece isolada, e não deve ser substituída no pacote funcional.
+
+## Teste real de carregamento da DLL experimental
+
+Em 12/11/2026, a execução isolada [GitHub Actions 43237225604](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43237225604) recompilou o núcleo com o patch widescreen recuperado e passou em um **teste real de carregamento no Windows**, implementado em [`recovered-v5/smoke_core.py`](../recovered-v5/smoke_core.py).
+
+O runner carregou `rffs_core.dll` com `ctypes.CDLL`, chamou `retro_api_version()` (retorno **1**) e `retro_get_system_info()` (nome **FinalBurn Neo (neogeo subset)**, versão **v1.0.0.03**, extensões **zip|7z|cue|ccd|chd**, `need_fullpath=true`). Resultado registrado: **PASS**. Nenhum arquivo de jogo, ROM, BIOS, CHD, Steamworks ou estado protegido foi utilizado.
+
+### Estado das pendências
+
+| Verificação | Situação | Evidência / limite |
+| --- | --- | --- |
+| Origem do símbolo `RffsWideSprites` | **Resolvida** | Patch recuperado nos arquivos do Codex e preservado no repositório |
+| Recompilar com o patch recuperado | **Resolvida** | Workflow de build 43160858588 e 43237225604 |
+| Exportação de `RffsWideSprites` na DLL nova | **Resolvida** | Comparação estática 43229497860; exportação agora comum à V6 |
+| Carregamento no Windows e API básica | **Resolvida** | Smoke test 43237225604, sem conteúdo de jogo |
+| Equivalência binária da DLL original V6 | **Não comprovada** | Tamanho e SHA256 diferentes; exportações restantes também diferentes |
+| Reprodução visual dos cenários widescreen | **Não comprovada no build reconstruído** | Requer testes funcionais e comparação de frames no jogo |
+| Continuidade de câmera, atores, HUD e transições em diferentes fases | **Não comprovada no build reconstruído** | Requer execução e capturas de múltiplos cenários |
+| Compatibilidade do savestate protegido da V6 | **Não comprovada; possível incompatibilidade** | Identificador de compatibilidade depende dos bytes da DLL |
+| Compatibilidade de áudio e Netplay | **Não testada** | Não faz parte dos testes de estrutura; não alterar o sistema multiplayer funcional |
+
+**Política de segurança:** não substituir os binários V6 da Release, não trocar a DLL em instalações funcionais e não modificar o save state protegido. O pacote experimental é apenas um artefato separado, sem jogo/BIOS/save.
