@@ -90,6 +90,37 @@ static int16_t input(unsigned port,unsigned device,unsigned,unsigned id){if(port
  return rffs::menu::Input(port,id);
 }
 static uint64_t hashPixels(){uint64_t h=14695981039346656037ull;for(auto value:pixels){h^=value;h*=1099511628211ull;}return h;}
+// Save the raw emulated framebuffer for deterministic offline inspection.
+// PPM is dependency-free and is saved only inside rffs-selftest during testing.
+static void saveRawFramePPM(const fs::path& target, const std::vector<uint32_t>& frame, unsigned width, unsigned height){
+ if(!width||!height||frame.size()!=size_t(width)*height)throw std::runtime_error("Invalid frame dimensions for PPM");
+ std::ofstream file(target,std::ios::binary|std::ios::trunc);
+ if(!file)throw std::runtime_error("Could not open PPM frame output");
+ file<<"P6\n"<<width<<" "<<height<<"\n255\n";
+ for(uint32_t rgba:frame){
+  const char rgb[3]={char((rgba>>16)&255),char((rgba>>8)&255),char(rgba&255)};
+  file.write(rgb,3);
+ }
+ if(!file)throw std::runtime_error("Could not write PPM frame output");
+}
+static void reportWideCenterDiff(const std::vector<uint32_t>& narrow, const std::vector<uint32_t>& wide, unsigned height) {
+ if(narrow.size()!=size_t(320)*height||wide.size()!=size_t(426)*height)
+  throw std::runtime_error("Invalid image buffers for widescreen comparison");
+ size_t centerDiffs=0,leftNonBlack=0,rightNonBlack=0;
+ constexpr unsigned margin=(426-320)/2;
+ for(unsigned y=0;y<height;++y){
+  for(unsigned x=0;x<320;++x){
+   if((narrow[y*320+x]&0xffffff)!=(wide[y*426+x+margin]&0xffffff))++centerDiffs;
+  }
+  for(unsigned x=0;x<margin;++x){
+   if(wide[y*426+x]&0xffffff)++leftNonBlack;
+   if(wide[y*426+320+margin+x]&0xffffff)++rightNonBlack;
+  }
+ }
+ printf("WIDESCREEN_VISUAL_DIAGNOSTIC center_differing_pixels=%zu/%zu left_nonblack=%zu/%zu right_nonblack=%zu/%zu (diagnostic only; camera can shift)\n",
+  centerDiffs,size_t(320)*height,leftNonBlack,size_t(margin)*height,rightNonBlack,size_t(margin)*height);
+}
+
 static void fallbackImage(){auto& cfg=rffs::menu::settings;const uint32_t* data=pixels.data();unsigned w=frameW,h=frameH;
  if(cfg.filter==2||cfg.filter==3){processed.resize(w*h*4);auto at=[&](int x,int y){return pixels[std::clamp(y,0,int(h)-1)*w+std::clamp(x,0,int(w)-1)];};for(unsigned y=0;y<h;++y)for(unsigned x=0;x<w;++x){auto E=at(x,y),B=at(x,y-1),D=at(x-1,y),F=at(x+1,y),H=at(x,y+1);uint32_t q[4]={E,E,E,E};if(B!=H&&D!=F){q[0]=D==B?D:E;q[1]=B==F?F:E;q[2]=D==H?D:E;q[3]=H==F?F:E;}for(int j=0;j<4;++j)processed[(y*2+j/2)*(w*2)+x*2+j%2]=q[j];}w*=2;h*=2;data=processed.data();}
  if(w!=textureW||h!=textureH||!texture){if(texture)SDL_DestroyTexture(texture);texture=SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,w,h);check(texture!=nullptr,"Create texture");textureW=w;textureH=h;}
@@ -166,8 +197,8 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR,int){
  }else if(hotplugTest){check(rffs::inputbridge::SelfTest(),"Hotplug under Steam");
  }else if(widescreenTest){
  auto before=saveCore();netExecuting=true;netInputs[0]=netInputs[1]=0;
- rffs::menu::settings.widescreen=false;for(int i=0;i<120;++i)runFrame();check(frameW==320&&*nativeScreenWidth==320&&*nativePitch==320**nativeBpp,"Original 4:3 dimensions");auto normalHash=gameHash();
- check(loadCore(before),"Restore before wide comparison");rffs::menu::settings.widescreen=true;for(int i=0;i<120;++i)runFrame();check(frameW==426&&*nativeScreenWidth==426&&*nativePitch==426**nativeBpp,"Wide 16:9 dimensions");check(gameHash()==normalHash,"Video mode preserves game RAM and timing");
+ rffs::menu::settings.widescreen=false;for(int i=0;i<120;++i)runFrame();check(frameW==320&&*nativeScreenWidth==320&&*nativePitch==320**nativeBpp,"Original 4:3 dimensions");auto normalHash=gameHash();auto narrowFrame=pixels;unsigned narrowH=frameH;saveRawFramePPM(runtime/L"widescreen-320.ppm",narrowFrame,320,narrowH);
+ check(loadCore(before),"Restore before wide comparison");rffs::menu::settings.widescreen=true;for(int i=0;i<120;++i)runFrame();check(frameW==426&&*nativeScreenWidth==426&&*nativePitch==426**nativeBpp,"Wide 16:9 dimensions");check(gameHash()==normalHash,"Video mode preserves game RAM and timing");auto wideFrame=pixels;saveRawFramePPM(runtime/L"widescreen-426.ppm",wideFrame,426,frameH);if(frameH!=narrowH)throw std::runtime_error("Frame height differs between 320 and 426");reportWideCenterDiff(narrowFrame,wideFrame,narrowH);
  check(loadCore(before),"Restore before second normal mode");rffs::menu::settings.widescreen=false;for(int i=0;i<120;++i)runFrame();check(gameHash()==normalHash&&frameW==320,"Wide to normal repeat");netExecuting=false;check(loadCore(before),"Restore after wide test");printf("WIDESCREEN_TOGGLE_PASS 320 -> 426 -> 320, game RAM identical\n");
  }else if(preparationTest){check(rffs::net::PreparationSelfTest(),"Preparation test");
  }else if(startInputTest){
