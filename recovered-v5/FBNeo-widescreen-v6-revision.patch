@@ -1,0 +1,536 @@
+diff --git a/src/burn/drv/neogeo/d_neogeo.cpp b/src/burn/drv/neogeo/d_neogeo.cpp
+index 033d60f..0f4e080 100644
+--- a/src/burn/drv/neogeo/d_neogeo.cpp
++++ b/src/burn/drv/neogeo/d_neogeo.cpp
+@@ -2034,7 +2034,7 @@ struct BurnDriver BurnDrvNeocdz = {
+ 	BDF_GAME_WORKING /*| BDF_SYSTEM_ONLY*/, 2, HARDWARE_SNK_NEOCD, GBF_MISC, 0,
+ 	NULL, neocdzRomInfo, neocdzRomName, NULL, NULL, NULL, NULL, neoCDInputInfo, neoCDDIPInfo,
+ 	NeoCDInit, NeoExit, NeoFrame, NeoRender, NeoScan, &NeoRecalcPalette,
+-	0x1000, 320, 224, 4, 3
++	0x1000, 426, 224, 16, 9
+ };
+ 
+ // ----------------------------------------------------------------------------
+diff --git a/src/burn/drv/neogeo/neo_run.cpp b/src/burn/drv/neogeo/neo_run.cpp
+index 06937a4..d7efaa3 100644
+--- a/src/burn/drv/neogeo/neo_run.cpp
++++ b/src/burn/drv/neogeo/neo_run.cpp
+@@ -1491,6 +1491,7 @@ INT32 NeoScan(INT32 nAction, INT32* pnMin)
+ 
+ 	if (nAction & ACB_DRIVER_DATA) {						// Scan driver data
+ 
++		SCAN_VAR(RffsWideLayers);
+ 		SekScan(nAction);									// Scan 68000 state
+ 		ZetScan(nAction);									// Scan Z80 state
+ 
+@@ -2369,6 +2370,97 @@ static void __fastcall neogeoWriteWordVideo(UINT32 sekAddress, UINT16 wordValue)
+ 			break;
+ 		}
+ 		case 0x02: {
++            if(NeoGraphicsRAMBank!=NeoGraphicsRAM &&
++                NeoGraphicsRAMPointer>=0x0800 && NeoGraphicsRAMPointer<0x0b00 &&
++                *((UINT16*)(Neo68KROMActive+0x108))==0x0223) {
++                const INT32 bank=(NeoGraphicsRAMPointer-0x0800)/2;
++                const UINT32 pc=SekGetPC(-1);
++                auto word=[](UINT32 a)->UINT16{return *((UINT16*)(Neo68KROMActive+(a&~1)));};
++                auto byte=[](UINT32 a)->UINT8{return Neo68KROMActive[a^1];};
++                if(pc==0x50b8 &&
++                    word(0x4fb2)==0x206c && word(0x4fbc)==0x3e2c &&
++                    word(0x4fdc)==0x3e3c && word(0x4fde)==0x0014 &&
++                    word(0x50b4)==0x3d41 && word(0x50b6)==0x0002) {
++                    const UINT32 object=m68k_get_reg(nullptr,M68K_REG_A4);
++                    if(object>=0x100000 && object+0x60<0x200000 && bank<384) {
++                        RffsWideSprites[bank]={};
++                        auto& layer=RffsWideLayers[bank];
++                        layer={};layer.object=object;layer.frame=nCurrentFrame;
++                        layer.map=(UINT32(word(object+0x4c))<<16)|word(object+0x4e);
++                        layer.height=word(object+0x4a);layer.mask=word(object+0x5a)>>4;
++                        layer.scroll=word(object+0x20)&word(object+0x5a);
++                        const UINT32 parent=0x100000+word(object+0x0a);
++                        const UINT32 workspace=m68k_get_reg(nullptr,M68K_REG_A5);
++                        if(parent+0x24<0x200000 && workspace+0x2024<0x200000){
++                            layer.camera=(INT16)word(parent+0x20);
++                            layer.cameraMax=word(workspace+0x2020);
++                        }
++                        const INT32 height=layer.height,mask=layer.mask;
++                        if(height>0 && height<=32 && mask>=20 && mask<=255 &&
++                           !(layer.map&1) && ((mask+1)&mask)==0 && layer.map<0x200000 &&
++                           layer.map+(mask+1)*height*4<=0x200000) {
++                            for(INT32 i=0;i<16;++i){
++                                const INT32 relative=i<8?i-8:i+13;
++                                const INT32 rawCol=(layer.scroll>>4)+relative;
++                                if(rawCol<0){
++                                    memset(layer.columns[i],0,height*4);
++                                    continue;
++                                }
++                                const INT32 column=rawCol&mask;
++                                memcpy(layer.columns[i],Neo68KROMActive+layer.map+column*height*4,height*4);
++                            }
++                        }else layer.object=0;
++                        if(RffsWideTraceEnabled() && nCurrentFrame==4000)
++                            printf("WIDE_LAYER bank=%03X object=%06X\n",bank,object);
++                    }
++                } else if(pc==0x36a2 && bank>0 && bank<384) {
++                    RffsWideLayers[bank].object=0;
++                    const UINT32 a4=m68k_get_reg(nullptr,M68K_REG_A4);
++                    const UINT32 a5=m68k_get_reg(nullptr,M68K_REG_A5);
++                    const INT32 d7=m68k_get_reg(nullptr,M68K_REG_D7)&0xff;
++                    const UINT16 d5=m68k_get_reg(nullptr,M68K_REG_D5)&0xffff;
++                    if(a4>=0x100000 && a4+0x20<=0x200000 && a5>=0x100000 && a5+0x1700<=0x200000) {
++                        const INT32 totalColsMinus1=byte(a4+0x12)&0x1f;
++                        const INT32 colIndex=totalColsMinus1-d7;
++                        INT16 trueX=(INT16)word(a5+0x16de);
++                        if(colIndex>0 && RffsWideSprites[bank-1].frame==nCurrentFrame) {
++                            const INT32 prevXZoom=(*((UINT16*)(NeoGraphicsRAM+0x10000+(bank-1)*2))>>8)&0x0f;
++                            trueX=RffsWideSprites[bank-1].trueX+prevXZoom+1;
++                        } else if(colIndex>0) {
++                            const INT32 curXZoom=(word(a5+0x16da)>>8)&0x0f;
++                            trueX+=colIndex*(curXZoom+1);
++                        }
++                        const UINT8 flags1f=byte(a4+0x1f);
++                        bool isWorld=(flags1f&0x40)==0;
++                        if(!isWorld) {
++                            const UINT32 p1a=((UINT32(word(a4+0x1a))<<16)|word(a4+0x1c))&0xffffff;
++                            for(UINT32 stgAct=0x103500;stgAct<=0x103700;stgAct+=0x100) {
++                                const UINT32 actPc=(UINT32(word(stgAct))<<16)|word(stgAct+2);
++                                const UINT32 act76=((UINT32(word(stgAct+0x76))<<16)|word(stgAct+0x78))&0xffffff;
++                                if((actPc==0x18e8c || actPc==0x1207a) && act76==p1a && p1a!=0) {
++                                    isWorld=true;
++                                    break;
++                                }
++                            }
++                        }
++                        RffsWideSprites[bank]={(INT32)nCurrentFrame,trueX,d5,(UINT8)(isWorld?1:0),0};
++                    } else {
++                        RffsWideSprites[bank]={};
++                    }
++                } else if(bank<384) {
++                    RffsWideLayers[bank].object=0;
++                    RffsWideSprites[bank]={};
++                }
++            }
++            // Isolated reverse-engineering trace. Off unless explicitly enabled.
++            if (RffsWideTraceEnabled() && nCurrentFrame >= 4000 && nCurrentFrame < 5100 &&
++                NeoGraphicsRAMBank != NeoGraphicsRAM && NeoGraphicsRAMPointer < 0x0C00) {
++                static UINT32 traced[128] = {}; static int traceCount=0;
++                const UINT32 pc=SekGetPC(-1); bool known=false;
++                for(int i=0;i<traceCount;++i)if((traced[i]>>8)==(pc>>8))known=true;
++                if(!known && traceCount<128){traced[traceCount++]=pc;
++                    printf("WIDE_WRITE frame=%d pc=%06X attr=%04X value=%04X\n",nCurrentFrame,pc,NeoGraphicsRAMPointer,wordValue);}
++            }
+ 			*((UINT16*)(NeoGraphicsRAMBank + NeoGraphicsRAMPointer)) = wordValue;
+ 			NeoGraphicsRAMPointer += nNeoGraphicsModulo;
+ 
+@@ -3970,6 +4062,8 @@ static INT32 NeoInitCommon()
+ 	BurnSetRefreshRate((nNeoSystemType & NEO_SYS_CD) ? NEO_CDVREFRESH : NEO_VREFRESH);
+ 	INT32 nNeoScreenHeight; // not used
+ 	BurnDrvGetFullSize(&nNeoScreenWidth, &nNeoScreenHeight);
++    memset(RffsWideLayers,0,sizeof(RffsWideLayers));
++    memset(RffsWideSprites,0,sizeof(RffsWideSprites));
+ 
+ 	if (NeoOverscan != 0) {
+ 		// if a user dislikes the width (overscan) set by the driver,
+diff --git a/src/burn/drv/neogeo/neo_sprite.cpp b/src/burn/drv/neogeo/neo_sprite.cpp
+index 335631c..535805b 100644
+--- a/src/burn/drv/neogeo/neo_sprite.cpp
++++ b/src/burn/drv/neogeo/neo_sprite.cpp
+@@ -1,4 +1,10 @@
+ #include "neogeo.h"
++RffsWideLayer RffsWideLayers[384] = {};
++RffsWideSprite RffsWideSprites[384] = {};
++static INT32 rffsClipLeft=0,rffsClipRight=320;
++static bool rffsExtraColumns=false;
++static INT32 rffsWorldOffset=0;
++static bool rffsStageViewport=false;
+ 
+ UINT8* NeoZoomROM;
+ 
+@@ -155,22 +161,268 @@ INT32 NeoRenderSprites()
+ 		}
+ 	}
+ 
++    // Keep the wider viewport inside the original stage's camera bounds.
++    // At a stage edge the original 320-pixel scene moves within that viewport;
++    // the additional view is taken from the remaining interior of the stage.
++    rffsWorldOffset=nNeoScreenWidth>320?(nNeoScreenWidth-320)/2:0;
++    rffsStageViewport=false;
++    bool rffsIsLayerBank[384]={};
++    INT32 rffsLayerBankOffset[384]={};
++    INT32 rffsFirstLayerBank=-1,rffsLastLayerEndBank=-1;
++    if(nNeoScreenWidth>320){
++        for(INT32 bank=0;bank<384;++bank){
++            const auto& layer=RffsWideLayers[bank];
++            const UINT16 size=*((UINT16*)(NeoGraphicsRAM+0x10400+bank*2));
++            if(!layer.object || layer.frame<nCurrentFrame-4 || layer.frame>nCurrentFrame ||
++               (size&0x40) || (size&0x3f)!=layer.height || layer.cameraMax<nNeoScreenWidth-320 ||
++               layer.cameraMax>2048 || layer.camera<-16 || layer.camera>layer.cameraMax+16)continue;
++            if(!rffsStageViewport){
++                rffsStageViewport=true;
++                const INT32 margin=(nNeoScreenWidth-320)/2;
++                INT32 start=layer.camera-margin;
++                const INT32 end=layer.cameraMax-(nNeoScreenWidth-320);
++                if(start<0)start=0;if(start>end)start=end;
++                rffsWorldOffset=layer.camera-start;
++                if(rffsWorldOffset<0)rffsWorldOffset=0;
++                if(rffsWorldOffset>nNeoScreenWidth-320)rffsWorldOffset=nNeoScreenWidth-320;
++                if(RffsWideTraceEnabled() && nCurrentFrame%100==0 && nCurrentFrame>=3000 && nCurrentFrame<=5800)
++                    printf("WIDE_VIEW frame=%d camera=%d max=%d offset=%d\n",nCurrentFrame,layer.camera,layer.cameraMax,rffsWorldOffset);
++            }
++            INT32 layerOffset=rffsWorldOffset;
++            if(layer.scroll<layerOffset && layer.camera>0)layerOffset=layer.scroll;
++            if(rffsFirstLayerBank<0)rffsFirstLayerBank=bank;
++            for(INT32 k=0;k<=20 && bank+k<384;++k){
++                if(k>0 && !(*((UINT16*)(NeoGraphicsRAM+0x10400+(bank+k)*2))&0x40))break;
++                rffsIsLayerBank[bank+k]=true;
++                rffsLayerBankOffset[bank+k]=layerOffset;
++                rffsLastLayerEndBank=bank+k;
++            }
++        }
++    }
++    INT32 rffsFrontBankStart=0,rffsFrontBankEnd=0,rffsFrontSpriteFrame=-1;
++    if(rffsStageViewport && rffsFirstLayerBank>=1){
++        rffsFrontBankStart=(rffsFirstLayerBank>=191)?191:1;
++        rffsFrontBankEnd=(rffsFirstLayerBank>=191)?380:190;
++        for(INT32 b=rffsFrontBankStart;b<=rffsFrontBankEnd;++b){
++            const INT32 f=RffsWideSprites[b].frame;
++            if(f>=(INT32)nCurrentFrame-2 && f<=(INT32)nCurrentFrame && f>rffsFrontSpriteFrame)
++                rffsFrontSpriteFrame=f;
++        }
++    }
++
++    auto renderCulledStageActors=[&](bool behindTilemaps){
++        if(!rffsStageViewport || nNeoScreenWidth<=320 || !Neo68KROMActive)return;
++        if(*((UINT16*)(Neo68KROMActive+0x108))!=0x0223)return;
++        auto word=[](UINT32 a)->UINT16{return *((UINT16*)(Neo68KROMActive+(a&~1)));};
++        auto byte=[](UINT32 a)->UINT8{return Neo68KROMActive[a^1];};
++        auto dword=[&](UINT32 a)->UINT32{return (UINT32(word(a))<<16)|word(a+2);};
++
++        UINT16* savedBank=pBank;
++        INT32 savedX=nBankXPos,savedY=nBankYPos;
++        INT32 savedXZoom=nBankXZoom,savedYZoom=nBankYZoom,savedSize=nBankSize;
++        INT32 savedClipL=rffsClipLeft,savedClipR=rffsClipRight;
++        bool savedExtra=rffsExtraColumns;
++
++        rffsClipLeft=0;
++        rffsClipRight=nNeoScreenWidth;
++        rffsExtraColumns=true;
++
++        for(UINT32 a4=0x101600;a4<0x104000;a4+=0x100){
++            const UINT32 pc=dword(a4);
++            if(pc<0x10a00 || pc>=0x19000)continue;
++            if(pc==0x11cde || pc==0x11d6a)continue;
++            if((pc==0x11362 || pc==0x119cc) && (INT32)dword(a4+0x28)<=0)continue;
++            if(pc==0x10ffc && byte(0x100052)==0xf1)continue;
++
++            const UINT8 f74=byte(a4+0x74);
++            if(f74&0x80)continue;
++            const UINT32 p76=dword(a4+0x76)&0xffffff;
++            const UINT8 fmt=byte(a4+0x81)&0x7f;
++            if(!p76 || p76>=0x200000 || fmt>12 || fmt==1)continue;
++
++            const UINT16 v5a=word(a4+0x5a);
++            const bool actorBehind=(v5a>=0x2000 && rffsFirstLayerBank>1);
++            if(actorBehind!=behindTilemaps)continue;
++
++            const INT32 cols=(byte(a4+0x5c)&0x1f)+1;
++            const INT32 rows=(byte(a4+0x5d)&0x1f)+1;
++            INT32 d2_x=(INT16)word(a4+0x20);
++            INT32 d4_y=(INT16)word(a4+0x24)+(INT16)word(a4+0x28);
++            INT32 d1_ax=(INT16)word(a4+0x54);
++            INT32 d2_ay=(INT16)word(a4+0x56);
++            const UINT8 f6a=byte(a4+0x6a);
++            const UINT8 flip=(byte(a4+0x71)^((f6a&0x80)?1:0)^((f6a&0x40)?2:0))&3;
++            INT32 widthPx=cols*16;
++            if(flip&1)d1_ax=widthPx-d1_ax;
++            const UINT8 yz=byte(a4+0x73);
++            if(yz!=0xff){
++                d1_ax=(d1_ax*(yz+1))>>8;
++                d2_ay=(d2_ay*(yz+1))>>8;
++                widthPx=(widthPx*(yz+1))>>8;
++            }
++            if(!(f74&0x40)){
++                const UINT32 slot=f74&0x0c;
++                d2_x-=(INT16)word(0x100e4c+slot);
++                d4_y-=(INT16)word(0x100e60+slot);
++            }
++            const INT32 leftX=d2_x-d1_ax;
++            const INT32 rightX=leftX+widthPx;
++            const INT32 topY=d4_y-d2_ay;
++
++            if(rightX>-8 && leftX<328)continue;
++            if(rightX+rffsWorldOffset<=0 || leftX+rffsWorldOffset>=nNeoScreenWidth)continue;
++
++            UINT16 grid[32][64]={};
++            UINT32 a0=p76;
++            const UINT16 palAdd=UINT16(byte(a4+0x70))<<8;
++            const UINT16 tileAdd=(f74&1)?0x2c00:0;
++            if(fmt==0 || fmt==2 || fmt==7 || fmt==8 || fmt==9){
++                for(INT32 c=0;c<cols;++c){
++                    for(INT32 r=0;r<rows;++r){
++                        if(a0+4>0x200000)break;
++                        grid[c][r*2]=word(a0)+tileAdd;a0+=2;
++                        grid[c][r*2+1]=word(a0)+palAdd;a0+=2;
++                    }
++                }
++            }else if(fmt==3){
++                if(a0+4>0x200000)continue;
++                const UINT16 at=word(a0+2)+palAdd;
++                for(INT32 c=0;c<cols;++c){
++                    for(INT32 r=0;r<rows;++r){
++                        if(a0+2>0x200000)break;
++                        grid[c][r*2]=word(a0)+tileAdd;
++                        grid[c][r*2+1]=at;
++                        a0+=(c==0 && r==0)?4:2;
++                    }
++                }
++            }else if(fmt==4){
++                if(a0+4>0x200000)continue;
++                UINT16 d0=word(a0);
++                const UINT16 at=word(a0+2)+palAdd;
++                a0+=4;
++                for(INT32 c=0;c<cols;++c){
++                    for(INT32 r=0;r<rows;++r){
++                        grid[c][r*2]=d0+tileAdd;
++                        grid[c][r*2+1]=at;
++                        if(a0<0x200000){d0=(d0&0xff00)|byte(a0);a0+=1;}
++                    }
++                }
++            }else if(fmt==5 || fmt==6){
++                UINT32 a1=a0;
++                a0+=(fmt==5)?((cols+1)&~1):(cols*2);
++                if(a0+4>0x200000)continue;
++                UINT16 d0=word(a0);
++                const UINT16 at=word(a0+2)+palAdd;
++                a0+=4;
++                for(INT32 c=0;c<cols;++c){
++                    UINT16 m=(fmt==5)?byte(a1):word(a1);
++                    a1+=(fmt==5)?1:2;
++                    const UINT16 bit=(fmt==5)?0x80:0x8000;
++                    for(INT32 r=0;r<rows;++r){
++                        if(m&bit){
++                            grid[c][r*2]=d0+tileAdd;
++                            grid[c][r*2+1]=at;
++                            if(a0<0x200000){d0=(d0&0xff00)|byte(a0);a0+=1;}
++                        }
++                        m<<=1;
++                    }
++                }
++            }else if(fmt==10){
++                if(a0+4>0x200000)continue;
++                UINT16 d0=word(a0);
++                const UINT16 at=word(a0+2)+palAdd;
++                for(INT32 c=0;c<cols;++c){
++                    for(INT32 r=0;r<rows;++r){
++                        grid[c][r*2]=d0+tileAdd;
++                        grid[c][r*2+1]=at;
++                        d0+=1;
++                    }
++                }
++            }else if(fmt==11 || fmt==12){
++                UINT32 a1=a0;
++                a0+=(fmt==11)?((cols+1)&~1):(cols*2);
++                if(a0+4>0x200000)continue;
++                UINT16 d0=word(a0);
++                const UINT16 at=word(a0+2)+palAdd;
++                for(INT32 c=0;c<cols;++c){
++                    UINT16 m=(fmt==11)?byte(a1):word(a1);
++                    a1+=(fmt==11)?1:2;
++                    const UINT16 bit=(fmt==11)?0x80:0x8000;
++                    for(INT32 r=0;r<rows;++r){
++                        if(m&bit){
++                            grid[c][r*2]=d0+tileAdd;
++                            grid[c][r*2+1]=at;
++                            d0+=1;
++                        }
++                        m<<=1;
++                    }
++                }
++            }
++
++            nBankYPos=(0x0200-((topY-0xf0)&0x01ff))&0x01ff;
++            nBankYZoom=yz;
++            nBankXZoom=(yz>>4)&0x0f;
++            nBankSize=(yz==0xff)?rows:(((rows*(yz+1))+0xff)>>8);
++            const INT32 step=nBankXZoom+1;
++
++            for(INT32 c=0;c<cols;++c){
++                const INT32 srcCol=(flip&1)?(cols-1-c):c;
++                UINT16 colBuf[64]={};
++                for(INT32 r=0;r<rows;++r){
++                    const INT32 srcRow=(flip&2)?(rows-1-r):r;
++                    const UINT16 t=grid[srcCol][srcRow*2];
++                    UINT16 at=grid[srcCol][srcRow*2+1];
++                    if(t||at)at^=flip;
++                    colBuf[r*2]=t;
++                    colBuf[r*2+1]=at;
++                }
++                nBankXPos=leftX+rffsWorldOffset+c*step;
++                if(nBankXPos>=-nBankXZoom && nBankXPos<nNeoScreenWidth){
++                    pBank=colBuf;
++                    RenderBank[nBankXZoom+16]();
++                }
++            }
++        }
++
++        pBank=savedBank;
++        nBankXPos=savedX;nBankYPos=savedY;
++        nBankXZoom=savedXZoom;nBankYZoom=savedYZoom;nBankSize=savedSize;
++        rffsClipLeft=savedClipL;rffsClipRight=savedClipR;
++        rffsExtraColumns=savedExtra;
++    };
++
+ 	for (INT32 nBank = 0; nBank < nMaxSpriteBank; nBank++) {
+ 		INT32 zBank = (nBank + nStart) % MAX_SPRITEBANK;
++        if (rffsStageViewport && zBank == rffsFirstLayerBank) {
++            renderCulledStageActors(true);
++        }
+ 		BankAttrib01 = *((UINT16*)(NeoGraphicsRAM + 0x010000 + (zBank << 1)));
+ 		BankAttrib02 = *((UINT16*)(NeoGraphicsRAM + 0x010400 + (zBank << 1)));
+ 		BankAttrib03 = *((UINT16*)(NeoGraphicsRAM + 0x010800 + (zBank << 1)));
+ 
+ 		pBank = (UINT16*)(NeoGraphicsRAM + (zBank << 7));
+ 
++        const auto& wideSpr = RffsWideSprites[zBank];
++        const bool hasWideSpr = rffsStageViewport && nNeoScreenWidth > 320 &&
++            zBank >= rffsFrontBankStart && zBank <= rffsFrontBankEnd &&
++            !rffsIsLayerBank[zBank] && rffsFrontSpriteFrame >= 0 &&
++            wideSpr.frame == rffsFrontSpriteFrame && !(BankAttrib02 & 0x40);
++        if (hasWideSpr && wideSpr.isWorld) {
++            BankAttrib02 = wideSpr.trueScb3;
++        }
++
+ 		if (BankAttrib02 & 0x40) {
+ 			nBankXPos += nBankXZoom + 1;
+ 		} else {
+ 			nBankYPos = (0x0200 - (BankAttrib02 >> 7)) & 0x01FF;
+-			nBankXPos = (BankAttrib03 >> 7);
+-			if (nNeoScreenWidth == 304) {
+-				nBankXPos -= 8;
+-			}
++            if (hasWideSpr) {
++                nBankXPos = wideSpr.trueX;
++            } else {
++			    nBankXPos = (BankAttrib03 >> 7);
++			    if (nNeoScreenWidth == 304) {
++				    nBankXPos -= 8;
++			    }
++            }
+ 
+ 			nBankYZoom = BankAttrib01 & 0xFF;
+ 			nBankSize  = BankAttrib02 & 0x3F;
+@@ -201,18 +453,55 @@ INT32 NeoRenderSprites()
+ 
+ 		if (nBankSize) {
+ 			nBankXZoom = (BankAttrib01 >> 8) & 0x0F;
+-			if (nBankXPos >= 0x01E0) {
++			if (!hasWideSpr && !(BankAttrib02 & 0x40) && nBankXPos >= 0x01E0) {
+ 				nBankXPos -= 0x200;
+ 			}
+ 
+-			if (nBankXPos >= 0 && nBankXPos < (nNeoScreenWidth - nBankXZoom - 1)) {
+-				RenderBank[nBankXZoom]();
+-			} else {
+-				if (nBankXPos >= -nBankXZoom && nBankXPos < nNeoScreenWidth) {
+-					RenderBank[nBankXZoom + 16]();
+-				}
+-			}
++            const INT32 wideMargin=nNeoScreenWidth>320?(nNeoScreenWidth-320)/2:0;
++            const INT32 bankOffset=rffsIsLayerBank[zBank]?rffsLayerBankOffset[zBank]:rffsWorldOffset;
++            nBankXPos+=bankOffset;
++            const bool stageColumn=rffsStageViewport && (rffsIsLayerBank[zBank] || (hasWideSpr && wideSpr.isWorld));
++            rffsClipLeft=stageColumn?0:rffsWorldOffset;
++            rffsClipRight=stageColumn?nNeoScreenWidth:(nNeoScreenWidth<320?nNeoScreenWidth:rffsWorldOffset+320);
++            rffsExtraColumns=false;
++            if(wideMargin){
++                // Original games park unused sprites just outside 0..319.
++                // Expanding their clipping rectangle exposes stale HUD/actor tiles.
++                if(nBankXPos>=rffsClipLeft-nBankXZoom && nBankXPos<rffsClipRight)
++                    RenderBank[nBankXZoom+16]();
++            }else if(nBankXPos>=0 && nBankXPos<nNeoScreenWidth-nBankXZoom-1){
++                RenderBank[nBankXZoom]();
++            }else if(nBankXPos>=-nBankXZoom && nBankXPos<nNeoScreenWidth){
++                RenderBank[nBankXZoom+16]();
++            }
++            nBankXPos-=bankOffset;
++            const auto& layer=RffsWideLayers[zBank];
++            if(RffsWideTraceEnabled() && layer.object && !(BankAttrib02&0x40) &&
++                nCurrentFrame>=3950 && nCurrentFrame<=4150)
++                printf("WIDE_DRAW f=%d slice=%d bank=%03x age=%d x=%d h=%d expected=%d\n",
++                    nCurrentFrame,nSliceStart,zBank,nCurrentFrame-layer.frame,nBankXPos,nBankSize,layer.height);
++
++            if(wideMargin && rffsIsLayerBank[zBank] && !(BankAttrib02&0x40) &&
++                layer.height==nBankSize && nBankXZoom==15){
++                if(RffsWideTraceEnabled() && nCurrentFrame%100==0 && nCurrentFrame>=3000 && nCurrentFrame<=5800)
++                    printf("WIDE_MAP frame=%d bank=%03x scroll=%d x=%d same=%d row0=%04x/%04x row1=%04x/%04x\n",nCurrentFrame,zBank,layer.scroll,nBankXPos,
++                        memcmp(pBank,layer.columns[7],layer.height*4)==0,pBank[0],layer.columns[7][0],pBank[2],layer.columns[7][2]);
++                auto* originalBank=pBank;const INT32 originalX=nBankXPos;
++                rffsClipLeft=0;rffsClipRight=nNeoScreenWidth;rffsExtraColumns=true;
++                for(INT32 i=0;i<16;++i){
++                    const INT32 relative=i<8?i-8:i+13;
++                    nBankXPos=originalX+bankOffset+relative*16;
++                    if(nBankXPos>=-15 && nBankXPos<nNeoScreenWidth){
++                        pBank=const_cast<UINT16*>(layer.columns[i]);
++                        RenderBank[15+16]();
++                    }
++                }
++                pBank=originalBank;nBankXPos=originalX;rffsExtraColumns=false;
++            }
+ 		}
++        if (rffsStageViewport && zBank == rffsLastLayerEndBank) {
++            renderCulledStageActors(false);
++        }
+ 	}
+ 
+ //	bprintf(PRINT_NORMAL, _T("\n"));
+diff --git a/src/burn/drv/neogeo/neo_sprite_render.h b/src/burn/drv/neogeo/neo_sprite_render.h
+index 8760075..24f5ae1 100644
+--- a/src/burn/drv/neogeo/neo_sprite_render.h
++++ b/src/burn/drv/neogeo/neo_sprite_render.h
+@@ -7,7 +7,7 @@
+  #define TESTCLIP(x) 1
+ #elif DOCLIP == 1
+  #define CLIP _CLIP
+- #define TESTCLIP(x) (nBankXPos + x) >= 0 && (nBankXPos + x) < nNeoScreenWidth
++ #define TESTCLIP(x) (nBankXPos + x) >= rffsClipLeft && (nBankXPos + x) < rffsClipRight && (!rffsExtraColumns || (nBankXPos + x) < rffsWorldOffset || (nBankXPos + x) >= rffsWorldOffset+320)
+ #else
+  #error illegal doclip value.
+ #endif
+diff --git a/src/burn/drv/neogeo/neo_text.cpp b/src/burn/drv/neogeo/neo_text.cpp
+index 5b2ad7f..da196e2 100644
+--- a/src/burn/drv/neogeo/neo_text.cpp
++++ b/src/burn/drv/neogeo/neo_text.cpp
+@@ -53,7 +53,7 @@ INT32 NeoRenderText()
+ 	INT32 x, y;
+ 	UINT8* pTextROM;
+ 	INT8* pTileAttrib;
+-	UINT8* pCurrentRow = pBurnDraw;
++	UINT8* pCurrentRow = pBurnDraw + (nNeoScreenWidth > 320 ? (nNeoScreenWidth - 320) / 2 * nBurnBpp : 0);
+ 	UINT32* pTextPalette = NeoPalette;
+ 	UINT32 nTileDown = nBurnPitch << 3;
+ 	UINT32 nTileLeft = nBurnBpp << 3;
+diff --git a/src/burn/drv/neogeo/neogeo.h b/src/burn/drv/neogeo/neogeo.h
+index 12d8ba8..e041222 100644
+--- a/src/burn/drv/neogeo/neogeo.h
++++ b/src/burn/drv/neogeo/neogeo.h
+@@ -184,3 +184,21 @@ UINT8 uPD4990ARead();
+ 
+ // d_neogeo.cpp
+ void kf2k3pcb_bios_decode();
++
++// Experimental Real Bout CD expanded-viewport diagnostics.
++struct RffsWideLayer {
++    UINT32 object, map;
++    INT32 frame, height, mask, scroll, camera, cameraMax;
++    UINT16 columns[16][64]; // relative -7..0 and 20..27, fixed hardware stride
++};
++extern RffsWideLayer RffsWideLayers[384];
++struct RffsWideSprite {
++    INT32 frame;
++    INT16 trueX;
++    UINT16 trueScb3;
++    UINT8 isWorld;
++    UINT8 reserved;
++};
++extern RffsWideSprite RffsWideSprites[384];
++
++inline bool RffsWideTraceEnabled(){static const bool enabled=getenv("RFFS_WIDE_TRACE")!=nullptr;return enabled;}
