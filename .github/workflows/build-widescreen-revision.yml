@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'recovered-v5/FBNeo-widescreen-v6-revision.patch'
+      - 'recovered-v5/smoke_core.py'
       - '.github/workflows/build-widescreen-revision.yml'
 
 permissions:
@@ -82,6 +83,14 @@ jobs:
           $lines | Set-Content -LiteralPath $report -Encoding UTF8
           Get-Content -LiteralPath $report
           if ($missing.Count) { throw "Core is missing $($missing.Count) required exports. See compatibility-report.txt." }
+
+      - name: Smoke-test DLL load and basic libretro API without game files
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & python ./smoke_core.py ./core-build/rffs_core.dll
+          if ($LASTEXITCODE -ne 0) { throw "Experimental DLL smoke test failed ($LASTEXITCODE)" }
 
       - name: Stage isolated player and core for future Windows validation
         shell: pwsh
