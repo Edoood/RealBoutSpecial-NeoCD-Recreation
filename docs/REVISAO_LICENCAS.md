@@ -71,3 +71,9 @@ A **V6 funcional permanece a versão oficial**. A Release v1.0.0 deve permanecer
 - [FBNeo — licença oficial](https://github.com/finalburnneo/FBNeo/blob/master/src/license.txt): inclui exigência de publicar modificações, licença integral e restrições de uso comercial/doações.
 - [Valve — exemplo Steamworks/Spacewar](https://partner.steamgames.com/doc/sdk/api/example): identifica o AppID 480 como exemplo e informa condições de distribuição das bibliotecas para jogos Steamworks. Esse texto não concede autorização genérica para reutilizar o identificador 480 em qualquer lançamento.
 - [Valve — documentação do SDK](https://partner.steamgames.com/doc/sdk): verificar condições contratuais concretas para a distribuição da biblioteca proprietária.
+
+## Resultado da inspeção exata do ZIP
+
+O ZIP da Release foi comparado com a cópia funcional do Google Drive por **SHA-256 idêntico**. A inspeção confirmou 15 arquivos, nenhum arquivo de licença/aviso separado no pacote, nenhuma ROM/BIOS com os nomes conhecidos e presença do estado inicial protegido. Há divergência de tamanho entre o executável do anexo (1.106.432 bytes) e outra cópia funcional registrada no histórico (1.192.960 bytes); a equivalência de binários ainda requer verificação. Relatório integral: [AUDITORIA_ZIP_ORIGINAL_V6.md](AUDITORIA_ZIP_ORIGINAL_V6.md).
+
+**A inclusão de licenças no repositório não corrige sua ausência no ZIP que está anexado.** Para manter a V6 original intacta, quaisquer mudanças no pacote devem ocorrer apenas em uma cópia separada, após a verificação dos direitos sobre o estado, do código-fonte correspondente e das demais dependências.
