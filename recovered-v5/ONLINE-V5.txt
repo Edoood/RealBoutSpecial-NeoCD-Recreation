@@ -1,0 +1,106 @@
+REAL BOUT SPECIAL CD - ONLINE V5.3 EXPERIMENTAL
+
+Use esta atualização sobre a pasta em que a versão v4 já funciona.
+Ela não inclui o jogo nem a BIOS. Os dois PCs precisam do mesmo disco,
+BIOS e arquivos desta atualização. A versão v4 local continua disponível.
+
+1. Abra a Steam e entre na sua própria conta em cada PC.
+2. Ambos abram Jogar Real Bout Online.exe. A Steam mostrará Spacewar.
+3. Aperte F1 e entre em Online.
+4. O anfitrião escolhe Criar sala e Convidar amigo.
+5. O amigo aceita o convite com o jogo já aberto; ou usa Procurar salas.
+6. Quando o amigo aparecer na sala, o anfitrião escolhe Iniciar versus.
+7. Aguardem a sincronização, fechem o F1 e cada um pressione Start.
+
+Cada pessoa usa as teclas/controle configurados em Jogador 1 no F1.
+O anfitrião controla P1; o convidado controla P2.
+O atraso padrão é 2 quadros, ajustável antes da partida (0 a 4).
+O ping aparece em ms no topo central, com cores por faixa de latência.
+Abaixo aparecem jogador e atraso de entrada.
+Durante o online, abrir o F1 não pausa a partida. Reinício fica bloqueado.
+Sair da partida restaura o estado local anterior à conexão.
+Os dados iniciais vêm do anfitrião só para a sessão; não são uma ROM nem
+um arquivo distribuído de estado do jogo.
+
+A versão usa GGPO real para previsão/rollback e Steam P2P com relay
+habilitado para o transporte. A busca filtra apenas salas deste jogo/build.
+A BIOS é japonesa. Os filtros e mapeamentos do F1 foram mantidos.
+
+Validação feita: compilação, 1200 quadros de teste GGPO com 1200 replays
+sem divergência, login Steam e criação/saída de uma sala real.
+Ainda precisa de teste entre duas contas/PCs: convite, busca, carregamentos,
+partidas, desconexão e latência. Não foi validado em uma partida remota.
+
+Se falhar, envie o texto da aba Online e o arquivo:
+rffs-runtime/modern.log (de ambos os PCs, após fechar o jogo).
+
+Correção v5.1: apresentação do menu separada da emulação,
+ponteiro desenhado no menu, mouse sem captura e navegação automática
+por gamepad desativada no menu. Os controles do jogo foram mantidos.
+
+Correção v5.2: Steam inicializada antes do vídeo/SDL. O F1 informa se
+o overlay está disponível e tem um botão para abri-lo. Na sala também
+é possível escolher Amigo Steam e Enviar convite Steam sem depender
+do overlay. Nenhum convite é enviado automaticamente.
+
+Correção v5.3: pedidos de overlay/convite são feitos pelo botão, depois
+de soltar o clique. Enquanto o overlay está aberto, o menu do jogo não
+altera o cursor nem a captura do mouse. A abertura é registrada no log.
+
+Organização: só Jogar Real Bout Online.exe fica na raiz. Se já havia
+executáveis de versões anteriores, mova-os para old antes de extrair
+a atualização. Preserve o disco, BIOS, DLLs e pastas de funcionamento.
+
+Correção do ponteiro: o menu usa o cursor nativo, sem ocultá-lo para
+desenhar uma seta por software. O mesmo cursor fica disponível no overlay.
+
+Ajuste posterior: restaurado o ponteiro próprio do F1. O cursor nativo
+é tratado separadamente enquanto o overlay da Steam está aberto.
+
+Ajuste de transição: o menu libera e exibe o cursor nativo antes
+de solicitar o convite da Steam; o ponteiro próprio do F1 foi preservado.
+
+Ponteiro do overlay: uma seta própria acompanha o mouse físico sobre
+a Steam, tanto pelo convite quanto por Shift+Tab. Ela não captura
+cliques e desaparece ao fechar o overlay ou sair da janela do jogo.
+
+Revisão baseada no backend oficial Dear ImGui/SDL: NoMouseCursorChange
+impede o menu de ocultar o cursor do sistema. O ponteiro do F1 foi
+preservado. Removidos a janela alternativa e os comandos Win32 forçados.
+A validação visual no overlay da Steam continua pendente.
+
+Modo de tela atualizado: inicia em janela sem bordas cobrindo a tela
+inteira, sem usar o modo fullscreen do SDL. F11 alterna entre essa janela
+sem bordas e a janela normal. Preferência salva em BorderlessWindow.
+
+Teste de compatibilidade: vídeo Direct3D11 por padrão, cursor nativo
+sempre visível e os quatro filtros mantidos. O menu F1 foi preservado.
+A preferência Direct3D11=0 no INI restaura o caminho OpenGL para comparar.
+
+Estado permanente preservado em rffs-runtime/estado-manual.rffsstate. O atalho F5 foi removido.
+Esse arquivo é a fonte principal ao abrir, no F6 e ao iniciar partidas online.
+O save normal do jogo é separado. O estado verifica versão, tamanho e integridade.
+Uma cópia protegida fica como recuperação se o estado manual for removido.
+
+Esta atualização inclui o estado inicial salvo após a confirmação do código de liberação.
+Extraia com o jogo fechado. O jogo abrirá automaticamente desse ponto.
+
+Preparação online otimizada (ambos devem aplicar esta atualização):
+Estados iniciais idênticos são confirmados por tamanho e hash e dispensam envio.
+Se forem diferentes, o estado é enviado com compressão XPRESS-Huffman e verificação.
+Falhas de preparação ficam visíveis por 15 segundos no topo e no menu Online.
+
+F6 carrega o estado manual a qualquer momento fora de uma partida online.
+Se o arquivo não existir, extraia o ZIP de atualização que inclui o estado confirmado.
+
+F4 alterna 4:3 original e widescreen experimental 16:9, sem reiniciar.
+A opção também fica em F1 > Imagem e é salva automaticamente.
+O padrão desta atualização é 4:3; o renderizador volta à largura original de 320 pixels.
+A escolha é local e não altera os controles nem a velocidade da simulação.
+
+Controles conectados depois da abertura são lidos por uma instância oculta do mesmo executável, sem inicializar Steam.
+Isso evita o bloqueio da detecção de dispositivos físicos pela Steam e permite conexão e reconexão automáticas.
+O processo de leitura fecha junto com o jogo; nenhum executável adicional precisa ser aberto.
+
+O estado inicial protegido (estado-inicial-protegido.rffsstate) é usado como recuperação
+se o estado manual não estiver presente. O estado inicial permanece preservado.
