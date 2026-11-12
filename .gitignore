@@ -1,0 +1,20 @@
+# NEVER commit game content, BIOS, saves, original binaries, or logs
+Support/
+*.chd
+*.iso
+*.cue
+*.rffsstate
+neocdz.zip
+neogeo.zip
+*.log
+*.backup
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+build/
+staging/
+*.7z
+*.zip
+.vs/
