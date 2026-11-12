@@ -100,3 +100,9 @@ Manter o **ZIP original da V6 como referência intocada** e **não declarar a Re
 6. **Outros materiais.** Confirmar a procedência/licenças do banner e do arquivo de mapeamento de controles efetivamente usados.
 
 **Resumo operacional:** não repetir auditorias gerais nem substituir o EXE funcional. Antes de publicar, preparar uma cópia do ZIP com avisos completos e código correspondente, resolver as condições de redistribuição identificadas acima e testar essa cópia. O anexo atual da Release é um rascunho; sua publicação ainda não foi autorizada nem executada. Este documento é uma revisão prática, não parecer jurídico.
+
+## Preparação de cópia separada com licenças
+
+Foi incluído o utilitário [`scripts/prepare-v6-license-copy.py`](../scripts/prepare-v6-license-copy.py), que recebe o **ZIP original auditado**, exige o SHA-256 exato, verifica os hashes dos principais binários e do save state, copia todas as 15 entradas originais **sem modificar o conteúdo** e adiciona em um **novo ZIP** os textos disponíveis de FBNeo, GGPO, Dear ImGui e SDL3, com `AVISOS_DE_DISTRIBUICAO.txt`. Se o novo arquivo já existir, não o sobrescreve. Não publica nem altera a Release.
+
+O script e as licenças já estão no GitHub, mas **a nova cópia ZIP ainda precisa ser executada/gerada a partir do arquivo original**; a publicação não está liberada porque a presença das licenças não resolve automaticamente código-fonte correspondente, Steamworks/AppID e demais direitos. Não confundir "ferramenta preparada" com "ZIP final criado".
