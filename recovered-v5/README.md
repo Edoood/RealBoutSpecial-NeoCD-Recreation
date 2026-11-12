@@ -49,3 +49,17 @@ Na pasta `recovered-v5` do repositório, em uma cópia de desenvolvimento, use `
 O player recuperado carrega `rffs-runtime/rffs_wide_v5.dll` através de `LoadLibraryExW`, enquanto o CMake reconstruído gera `rffs_core.dll`. Uma configuração experimental nova no GitHub Actions inspeciona os símbolos exportados pela DLL com `dumpbin` e grava `runtime/compatibility-report.txt` no artefato. Este relatório é **uma análise estática**, não um teste de execução.
 
 O formato do estado salvo utiliza a assinatura `RFFSST02` e uma chave calculada sobre os primeiros 124 bytes do CHD, **todos os bytes da DLL** e a BIOS `neocdz.zip`. Por isso, uma DLL recompilada pode invalidar `estado-inicial-protegido.rffsstate`, mesmo com API compatível. Não renomeie nem substitua o DLL original dentro da V6; mantenha a versão experimental isolada e jamais modifique o ZIP da Release só com base no sucesso da compilação.
+
+## Validação funcional isolada com CHD e BIOS do próprio usuário
+
+Para validar o **build reconstruído** no Windows sem afetar o jogo funcional, extraia o artefato `rffs-v6-widescreen-source-reconstruction-unverified` do workflow [build-widescreen-revision.yml](../.github/workflows/build-widescreen-revision.yml). Localize a subpasta `test-package` que contém `RFFS-Online-v5.exe`, `SDL3.dll` e `rffs-runtime/rffs_wide_v5.dll`.
+
+O script [`test-widescreen-isolated.ps1`](test-widescreen-isolated.ps1) exige **uma pasta de destino nova** e cópias locais dos seus próprios arquivos CHD e `neocdz.zip`. Ele copia somente esses itens e o player/DLL experimentais para um diretório separado, não copia o estado protegido e não modifica a V6 original. Exemplo (substitua pelos caminhos verdadeiros):
+
+```powershell
+.\\test-widescreen-isolated.ps1 -ExperimentalPackageFolder 'D:\\TESTES\\test-package' -ChdFile 'D:\\MEU-JOGO\\disc.chd' -BiosFile 'D:\\MEU-JOGO\\neocdz.zip' -OutputFolder 'D:\\RFFS-VALIDACAO-NOVA' -FullTest
+```
+
+A primeira fase `--widescreen-test` executa 120 frames a 320 pixels e 120 frames a 426 pixels, comparando o estado da RAM do jogo após retornar ao mesmo estado inicial. Exige `WIDESCREEN_TOGGLE_PASS`. Com `-FullTest`, roda também `--self-test` (inicialização, áudio, captura de imagens e consistência do save/restore **dentro do build reconstruído**, não com o savestate protegido V6). Os logs ficam no destino isolado.
+
+**Atenção:** o teste de alternância e RAM não assegura renderização correta dos cenários em todas as fases. Esse diagnóstico precisa de inspeção de imagens e percurso de câmera/atores. O teste não valida Netplay/Steam da V6, e a DLL reconstruída não deve ser colocada na instalação funcional.
