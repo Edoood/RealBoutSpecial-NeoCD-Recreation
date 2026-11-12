@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-root=Path(__file__).resolve().parent;lr=root/'FBNeo/src/burner/libretro';base=(lr/'Makefile.common').read_text();subset=(lr/'Makefile.neogeo').read_text();variables={'MAIN_FBNEO_DIR':str(root/'FBNeo/src')}
+root=Path(__file__).resolve().parent;lr=root/'FBNeo/src/burner/libretro';base=(lr/'Makefile.common').read_text(encoding='utf-8',errors='replace');subset=(lr/'Makefile.neogeo').read_text(encoding='utf-8',errors='replace');variables={'MAIN_FBNEO_DIR':str(root/'FBNeo/src')}
 def expand(x):
  for _ in range(20):
   new=re.sub(r'\$\((\w+)\)',lambda m:variables.get(m[1],m[0]),x)
@@ -20,7 +20,7 @@ for text in (base,subset):
 # MSVC handles compiled source correctly; all Neo Geo driver declarations are
 # generated from their source instead of the upstream all-systems index.
 gen=root/'core-generated';gen.mkdir(exist_ok=True)
-drivertext=(root/'FBNeo/src/burn/drv/neogeo/d_neogeo.cpp').read_text()
+drivertext=(root/'FBNeo/src/burn/drv/neogeo/d_neogeo.cpp').read_text(encoding='utf-8',errors='replace')
 drivertext=re.sub(r'/\*.*?\*/','',drivertext,flags=re.S)
 names=re.findall(r'struct BurnDriver\s+(\w+)\s*=',drivertext)
 (gen/'driverlist.h').write_text(''.join('extern struct BurnDriver '+n+';\n' for n in names)+'static struct BurnDriver* pDriver[]={'+','.join('&'+n for n in names)+'};\nstruct game_sourcefile_entry {char* game_name;char* sourcefile;};\nstatic game_sourcefile_entry sourcefile_table[]={{"neocdz","neogeo/d_neogeo.cpp"},{"",""}};\n')
