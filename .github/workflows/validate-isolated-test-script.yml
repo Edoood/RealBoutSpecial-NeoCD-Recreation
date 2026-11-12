@@ -1,0 +1,35 @@
+name: Validate isolated Windows test script syntax
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'recovered-v5/test-widescreen-isolated.ps1'
+      - '.github/workflows/validate-isolated-test-script.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse script and check non-destructive test guardrails
+        shell: pwsh
+        run: |
+          $file = (Resolve-Path 'recovered-v5/test-widescreen-isolated.ps1').Path
+          $tokens=$null
+          $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile($file,[ref]$tokens,[ref]$errors) | Out-Null
+          if ($errors.Count) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            throw "PowerShell syntax errors: $($errors.Count)"
+          }
+          $src=Get-Content -LiteralPath $file -Raw
+          foreach ($required in @('Test-Path -LiteralPath $dest','--widescreen-test','--self-test','WIDESCREEN_TOGGLE_PASS','rffs-selftest','Destino dentro da pasta do jogo original')) {
+            if (!$src.Contains($required)) { throw "Required guard or test missing: $required" }
+          }
+          if ($src -match 'Remove-Item|Move-Item|Rename-Item') { throw 'Unexpected destructive file operation in test script' }
+          Write-Host 'PASS: isolated Windows test script parses and retains non-destructive guardrails'
