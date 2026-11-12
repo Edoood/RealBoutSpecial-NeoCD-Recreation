@@ -1,0 +1,120 @@
+name: Experimental V6 widescreen revision build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'recovered-v5/FBNeo-widescreen-v6-revision.patch'
+      - '.github/workflows/build-widescreen-revision.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  recover-and-build:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Configure MSVC and clang-cl environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Check development tools
+        shell: pwsh
+        run: |
+          git --version
+          python --version
+          cmake --version
+          ninja --version
+          clang-cl --version
+
+      - name: Select user's newly recovered V6 widescreen patch in isolated runner
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          Copy-Item -LiteralPath ./FBNeo-widescreen-v6-revision.patch -Destination ./FBNeo-widescreen.patch -Force
+          Select-String -Path ./FBNeo-widescreen.patch -Pattern 'RffsWideSprite RffsWideSprites\[384\]' | Out-String | Write-Host
+
+      - name: Fetch pinned source and build reconstructed V5
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          ./prepare-dependencies.ps1 -Build
+
+      - name: Verify experimental core exports and runtime layout
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $core = Join-Path (Get-Location) 'core-build/rffs_core.dll'
+          $player = Join-Path (Get-Location) 'runtime/RFFS-Online-v5.exe'
+          $report = Join-Path (Get-Location) 'runtime/compatibility-report.txt'
+          if (!(Test-Path -LiteralPath $core)) { throw "Core DLL missing: $core" }
+          if (!(Test-Path -LiteralPath $player)) { throw "Experimental player EXE missing: $player" }
+          $exports = (& dumpbin.exe /exports $core | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw 'dumpbin could not inspect core exports' }
+          $required = @(
+            'retro_set_environment','retro_set_video_refresh','retro_set_audio_sample',
+            'retro_set_audio_sample_batch','retro_set_input_poll','retro_set_input_state',
+            'retro_set_controller_port_device','retro_init','retro_load_game_special',
+            'retro_get_system_av_info','retro_run','retro_reset','retro_serialize_size',
+            'retro_serialize','retro_unserialize','retro_unload_game','retro_deinit',
+            '?nNeoScreenWidth@@3HA','nBurnPitch','nBurnBpp'
+          )
+          $optional = @('?SekGetPC@@YAIH@Z','?diag_input@@3PEAEEA','?NeoJoy1@@3PAEA','?NeoButton1@@3PAEA')
+          $missing = @($required | Where-Object { $exports -notmatch [regex]::Escape($_) })
+          $optionalMissing = @($optional | Where-Object { $exports -notmatch [regex]::Escape($_) })
+          $lines = @(
+            'EXPERIMENTAL BUILD - NOT A FUNCTIONAL GAME TEST',
+            "Core: $core",
+            "Player: $player",
+            "Required exports checked: $($required.Count)",
+            "Missing required: $($missing -join ', ')",
+            "Missing diagnostic/optional: $($optionalMissing -join ', ')",
+            'The player expects rffs-runtime/rffs_wide_v5.dll; this workflow creates rffs_core.dll.',
+            'Do not replace the original V6 executable, DLL, protected savestate or Release ZIP.',
+            'The protected savestate may be rejected because its compatibility key hashes the DLL.',
+            'Steamworks, CD playback, widescreen and game startup are NOT tested here.'
+          )
+          $lines | Set-Content -LiteralPath $report -Encoding UTF8
+          Get-Content -LiteralPath $report
+          if ($missing.Count) { throw "Core is missing $($missing.Count) required exports. See compatibility-report.txt." }
+
+      - name: Stage isolated player and core for future Windows validation
+        shell: pwsh
+        working-directory: recovered-v5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path (Get-Location) 'test-package'
+          $runtime = Join-Path $stage 'rffs-runtime'
+          New-Item -ItemType Directory -Force -Path $runtime | Out-Null
+          Copy-Item -LiteralPath './runtime/RFFS-Online-v5.exe' -Destination $stage
+          Copy-Item -LiteralPath './runtime/SDL3.dll' -Destination $stage
+          Copy-Item -LiteralPath './core-build/rffs_core.dll' -Destination (Join-Path $runtime 'rffs_wide_v5.dll')
+          Copy-Item -LiteralPath './runtime/compatibility-report.txt' -Destination $stage
+          @'
+          EXPERIMENTAL V6-STYLE WIDESCREEN SOURCE REVISION - NOT A GAME RELEASE
+          This is a separately reconstructed build, not the working V6.
+          Do NOT copy these binaries over the working V6 installation.
+          The compiled core is staged under the DLL name expected by the recovered player.
+          Contains NO game CHD, BIOS, Steam SDK DLL, configuration, or protected savestate.
+          Functional startup, video, audio, GGPO/Steamworks, and V6 save-state compatibility
+          have NOT been validated. Use only in an isolated Windows test folder.
+          The V6 savestate may be incompatible because the player fingerprints the DLL bytes.
+          '@ | Set-Content -LiteralPath (Join-Path $stage 'READ-ME-EXPERIMENTAL.txt') -Encoding UTF8
+          Get-ChildItem -Path $stage -Recurse -File | Select-Object FullName, Length
+
+      - name: Upload experimental binaries (never publish as a release)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rffs-v6-widescreen-source-reconstruction-unverified
+          path: |
+            recovered-v5/runtime/**
+            recovered-v5/core-build/*.dll
+            recovered-v5/test-package/**
+          if-no-files-found: warn
+          retention-days: 7
