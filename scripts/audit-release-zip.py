@@ -33,8 +33,13 @@ def sha256_entry(archive, entry):
 def main():
     out = Path("release-zip-audit")
     out.mkdir(exist_ok=True)
-    subprocess.run(["gh", "release", "download", RELEASE_TAG, "--pattern", ASSET, "--dir", str(out), "--clobber"], check=True)
     zip_path = out / ASSET
+    # Draft releases are invisible to `gh release download <tag>`; fetch the known asset by ID.
+    with open(zip_path, "wb") as target:
+        subprocess.run(["gh", "api", "-H", "Accept: application/octet-stream", "/repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311"], stdout=target, check=True)
+    with open(zip_path, "rb") as f:
+        if f.read(4) != b"PK\\x03\\x04":
+            raise RuntimeError("Asset endpoint did not return a ZIP archive; no Release files were changed")
     actual = sha256_file(zip_path)
     rows = [
         "# Read-only audit of the original draft Release ZIP",
