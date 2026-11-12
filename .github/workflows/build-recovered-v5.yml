@@ -38,7 +38,7 @@ jobs:
           ./prepare-dependencies.ps1 -Build
 
       - name: Upload experimental binaries (never publish as a release)
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rffs-v5-experimental-unverified
