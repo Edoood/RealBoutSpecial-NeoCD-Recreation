@@ -1,0 +1,117 @@
+name: Compare V6 with recovered widescreen revision DLL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/compare-v6-widescreen-revision.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  compare:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Download original V6 and newly recovered widescreen DLL (read-only)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force originals, experiment | Out-Null
+          $zip = Join-Path (Get-Location) 'originals/v6-original.zip'
+          # Existing draft asset 737474311, NEVER changed/reuploaded
+          & curl.exe --fail --silent --show-error --location --retry 3 --header "Authorization: Bearer $env:GH_TOKEN" --header 'Accept: application/octet-stream' --output "$zip" 'https://api.github.com/repos/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/assets/737474311'
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain draft ZIP' }
+          $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne 'ed8fc7fa160411aa209cedba0f512ec9a256021ed5a07fdcebdee3741aa7374e') { throw "Original ZIP hash does not match: $sha" }
+          Expand-Archive -LiteralPath $zip -DestinationPath originals/files
+          & gh run download 43160858588 -n rffs-v6-widescreen-source-reconstruction-unverified -D experiment
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot download widescreen revision build artifact' }
+          Get-ChildItem experiment -Recurse -Filter '*.dll' | Select-Object FullName,Length
+
+      - name: Static analysis - export sets, PE info, hashes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v6 = (Resolve-Path 'originals/files/Support/rffs-runtime/rffs_wide_v5.dll').Path
+          $v5 = (Get-ChildItem experiment -Recurse -Filter 'rffs_core.dll' | Select-Object -First 1).FullName
+          if (-not $v5) { throw 'Rebuilt DLL missing in experiment' }
+          $out = 'comparison'
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $old = (& dumpbin.exe /exports "$v6" | Out-String)
+          $new = (& dumpbin.exe /exports "$v5" | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw 'dumpbin failed' }
+          # dumpbin table: ordinal hint RVA name (each output may contain forwarding metadata)
+          function Get-Exports([string]$data) {
+            $symbols = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+            foreach ($line in ($data -split "`r?`n")) {
+              if ($line -match '^\s*\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)') { [void]$symbols.Add($Matches[1]) }
+            }
+            return $symbols
+          }
+          $a=Get-Exports $old; $b=Get-Exports $new
+          $missing=@($a | Where-Object { -not $b.Contains($_) } | Sort-Object)
+          $added=@($b | Where-Object { -not $a.Contains($_) } | Sort-Object)
+          $common=@($a | Where-Object { $b.Contains($_) } | Sort-Object)
+          $h6=(Get-FileHash $v6 -Algorithm SHA256).Hash.ToLowerInvariant()
+          $h5=(Get-FileHash $v5 -Algorithm SHA256).Hash.ToLowerInvariant()
+          $hdr6=(& dumpbin.exe /headers $v6 | Out-String)
+          $hdr5=(& dumpbin.exe /headers $v5 | Out-String)
+          $lines=@(
+            '# Static DLL comparison: V6 distributed vs reconstructed widescreen revision',
+            '',
+            '**Not a game test and not proof of source-code correspondence.**',
+            '',
+            "| Field | V6 distributed DLL | Experimental reconstructed DLL |",
+            "| --- | --- | --- |",
+            "| Size | $((Get-Item $v6).Length) bytes | $((Get-Item $v5).Length) bytes |",
+            "| SHA-256 | $h6 | $h5 |",
+            "| Number of exported functions/variables | $($a.Count) | $($b.Count) |",
+            '',
+            "- Exports common to both: $($common.Count)",
+            "- V6 exports missing in experimental widescreen revision: $($missing.Count)",
+            "- Experimental-only exports: $($added.Count)",
+            '',
+            '## V6 exports missing from reconstructed DLL',
+            '',
+            'The list below determines whether the experimental DLL can expose the same entry points. It does not establish behavior.',
+            '',
+            ($missing -join ", "),
+            '',
+            '## Experimental-only exports',
+            '',
+            ($added -join ", "),
+            '',
+            '## Compatibility limits',
+            '',
+            '- Export-name equivalence does not prove binary equivalence, memory layouts, widescreen behavior, audio, or netplay.',
+            '- The protected RFFSST02 state hashes the DLL bytes, so these different builds should not be swapped into V6.',
+            '- The published V6 ZIP and the added-license ZIP are not modified by this analysis.',
+            '- This comparison cannot certify that recovered V5 is the exact modified source corresponding to V6.',
+            '- Do not replace the V6 DLL with the experiment solely because exported names match.'
+          )
+          $report=$lines -join "`n"
+          $report | Set-Content -LiteralPath "$out/REPORT.md" -Encoding UTF8
+          $old | Set-Content -LiteralPath "$out/exports-original-v6.txt"
+          $new | Set-Content -LiteralPath "$out/exports-experimental-v5.txt"
+          $hdr6 | Set-Content -LiteralPath "$out/headers-original-v6.txt"
+          $hdr5 | Set-Content -LiteralPath "$out/headers-experimental-v5.txt"
+          Write-Output $report
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value $report
+
+      - name: Upload static comparison report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-widescreen-revision-dll-comparison
+          path: comparison/**
+          if-no-files-found: warn
+          retention-days: 30
