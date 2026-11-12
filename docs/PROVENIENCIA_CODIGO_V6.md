@@ -116,3 +116,11 @@ O workflow [43259832222](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreat
 O fonte reconstruído `recovered-v5/rffs_player.cpp` foi ampliado para que `--widescreen-test` capture os pixels brutos das duas execuções, após restaurar o mesmo estado inicial: `rffs-selftest/widescreen-320.ppm` e `rffs-selftest/widescreen-426.ppm` (formato PPM/P6, sem filtro visual ou redimensionamento). O log `WIDESCREEN_VISUAL_DIAGNOSTIC` informa quantos pixels diferem na área central 320×224 e quantos pixels não pretos aparecem em cada margem lateral de 53 pixels. **A contagem não é tratada automaticamente como erro**, pois a câmera widescreen pode deslocar a área original nos limites de cada cenário.
 
 O script `recovered-v5/test-widescreen-isolated.ps1` exige a presença das duas imagens brutas e do diagnóstico no log, além de `WIDESCREEN_TOGGLE_PASS`. Esses artefatos facilitam comparar cenários, sprites, HUD e câmera por inspeção posterior **sem modificar a V6 funcional**. Ainda não há resultado visual real: o teste precisa do CHD e da BIOS do mantenedor executados localmente no Windows. A compilação e a verificação de formato dos scripts não são prova de funcionamento de cenas reais.
+
+## Build confirmado das capturas visuais (12/11/2026)
+
+O workflow [43291616227](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43291616227) terminou com **sucesso** após integrar as rotinas de captura PPM do buffer bruto, contagem de diferenças no centro 320 pixels e contagem de pixels não pretos nas laterais em 426 pixels. A verificação de carregamento do core, o build do player e os testes do pacote isolado passaram. Artefato: `rffs-v6-widescreen-source-reconstruction-unverified` (GitHub Actions artifact ID **13976339551**); não é uma Release nem substituto da V6 funcional.
+
+O workflow [43291723319](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/actions/runs/43291723319) passou na validação sintática do script PowerShell atualizado, que passa a exigir capturas `widescreen-320.ppm` e `widescreen-426.ppm` geradas durante a execução local.
+
+**Pendente:** executar esse script com o CHD e a BIOS do usuário numa pasta nova e inspecionar as capturas. O GitHub Actions só validou compilação, carregamento da API e organização do pacote; não comprovou os gráficos da fase em execução.
