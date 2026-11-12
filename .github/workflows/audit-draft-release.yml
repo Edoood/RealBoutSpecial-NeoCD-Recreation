@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/audit-draft-release.yml'
+      - 'scripts/audit-release-zip.py'
 
 permissions:
   contents: read
