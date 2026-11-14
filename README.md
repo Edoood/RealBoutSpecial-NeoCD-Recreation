@@ -6,6 +6,12 @@
 
 > **Jurídico e licenças.** Consulte os [avisos e condições de redistribuição](JURIDICO.md), incluindo o que o pacote Windows contém e as condições de cada dependência.
 
+## Novidade da V2 — personagens EX pelo menu F1
+
+Antes de entrar no modo **Versus**, pressione **F1**, abra a aba **Cheats** logo abaixo de **Online** e clique em **Liberar personagens EX**. **Andy EX, Mary EX, Billy EX e Tung EX** aparecem na lista de seleção do Versus após o desbloqueio.
+
+Esse recurso dispensa o savestate pré-carregado e o comando manual na tela de ranking. O salvamento local com **F5** continua disponível. A V2 foi testada localmente pelo mantenedor. A [release v1.0.1](https://github.com/Edoood/RealBoutSpecial-NeoCD-Recreation/releases/tag/v1.0.1) corresponde à versão anterior.
+
 ## Principais diferenciais
 
 - **Widescreen**. Pressione **F4** durante o jogo para ligar ou desligar a tela ampla.
