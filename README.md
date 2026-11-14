@@ -12,6 +12,8 @@ Na aba **Cheats** do menu **F1**, você pode liberar os **personagens EX**.
 
 **No modo Arcade**, depois de liberar os personagens EX em **F1 → Cheats**, destaque Andy, Billy, Mary ou Tung na tela de seleção e pressione **F2** para escolher a variante EX.
 
+**No modo Versus**, acesse **Options** no menu do jogo para encontrar esse modo.
+
 **No modo online**, o host (jogador que cria a sala) deve abrir **F1 → Cheats** e selecionar **Liberar personagens EX** antes de criar a sala.
 
 ## Principais diferenciais
