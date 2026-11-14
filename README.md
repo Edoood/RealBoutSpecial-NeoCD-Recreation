@@ -6,7 +6,7 @@
 
 > **Jurídico e licenças.** Consulte os [avisos e condições de redistribuição](JURIDICO.md), incluindo o que o pacote Windows contém e as condições de cada dependência.
 
-## Novidade da V2
+## Novidades na 1.0.2
 
 Na aba **Cheats** do menu **F1**, você pode liberar os **personagens EX**.
 
