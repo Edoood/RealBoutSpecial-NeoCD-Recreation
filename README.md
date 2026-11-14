@@ -1,6 +1,6 @@
-# Real Bout Special NeoCD Recreation
+# Fúria Fatal RBS
 
-Projeto comunitário para **Windows** baseado na **emulação da versão Neo Geo CD de Real Bout Fatal Fury Special**.
+**Fúria Fatal RBS** é um projeto comunitário e não oficial para Windows que usa a versão Neo Geo CD de **Real Bout Fatal Fury Special** (Fatal Fury Real Bout Special). O jogo original é fornecido pelo usuário em formato CHD.
 
 > **Não é uma recompilação nativa do jogo.** O projeto utiliza emulação.
 
