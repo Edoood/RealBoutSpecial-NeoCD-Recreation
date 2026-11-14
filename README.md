@@ -8,10 +8,11 @@
 
 ## Principais diferenciais
 
-- **Widescreen**.
+- **Widescreen**. Pressione **F4** durante o jogo para ligar ou desligar a tela ampla.
 - **Músicas da versão Neo Geo CD, com áudio de CD**.
 - **Netplay via Steam** para partidas online.
 - **Placar automático**.
+- **Personagens EX**. Como no console, faça o comando de desbloqueio na tela de ranking. A fala de Geese confirma que o comando funcionou.
 - Salvamento local pelo jogador. O pacote atualizado inicia sem estado pré-carregado.
 - **Launcher gráfico para Windows**, com seleção de ROM e BIOS e botão PLAY.
 - Menu de opções acessível pela tecla **F1**.
