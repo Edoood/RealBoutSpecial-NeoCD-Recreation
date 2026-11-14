@@ -4,6 +4,8 @@
 
 > **Não é uma recompilação nativa do jogo.** O projeto utiliza emulação.
 
+> **Jurídico e licenças.** Consulte os [avisos e condições de redistribuição](JURIDICO.md), incluindo o que o pacote Windows contém e as condições de cada dependência.
+
 ## Principais diferenciais
 
 - **Widescreen**.
