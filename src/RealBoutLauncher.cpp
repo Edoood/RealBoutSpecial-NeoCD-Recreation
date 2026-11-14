@@ -271,7 +271,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR,int show) {
     wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);
     wc.hbrBackground=CreateSolidBrush(RGB(23,24,33));
     if(!RegisterClassExW(&wc))return 1;
-    HWND hwnd=CreateWindowExW(0,wc.lpszClassName,L"REAL BOUT SPECIAL | ONLINE LAUNCHER",
+    HWND hwnd=CreateWindowExW(0,wc.lpszClassName,L"F\u00daRIA FATAL RBS | Real Bout Fatal Fury Special (Neo Geo CD)",
         WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX,
         CW_USEDEFAULT,CW_USEDEFAULT,918,775,nullptr,nullptr,instance,nullptr);
     if(!hwnd)return 1;
