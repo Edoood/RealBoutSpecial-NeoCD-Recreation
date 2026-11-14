@@ -12,7 +12,7 @@
 - **Músicas da versão Neo Geo CD, com áudio de CD**.
 - **Netplay via Steam** para partidas online.
 - **Placar automático**.
-- **Personagens EX**. Na tela de ranking, faça rapidamente **← ↙ ↓ ↘ → ↗ ↑ ↖ ←**. Depois, segure **↖** e aperte **A**, **B** e **C** nessa ordem, mantendo a diagonal pressionada. Geese diz **“Come on!”** quando o comando funciona. As letras correspondem aos botões do Neo Geo. [Guia da versão Neo Geo CD](https://www.consoledatabase.com/cheats/snkneogeocd/realboutfatalfuryspecial/)
+- **Personagens EX (Neo Geo CD)**. Na tela de ranking, faça rapidamente **→ ↗ ↑ ↖ ← ↙ ↓ ↘ →**, depois segure **↘** e aperte **A, B, C** em sequência. Geese diz **“Come on!”** para confirmar. Na seleção, destaque Andy, Tung, Billy ou Mary. Segure **Start**, aperte **B, B, C, C**, depois mantenha **B** e **C** pressionados junto com **Start** e aperte **A** ou **D** para selecionar a versão EX. As letras correspondem aos botões do Neo Geo. [Comandos da versão Neo Geo CD no GameFAQs](https://gamefaqs.gamespot.com/neogeocd/918894-real-bout-fatal-fury-special/cheats)
 - Salvamento local pelo jogador. O pacote atualizado inicia sem estado pré-carregado.
 - **Launcher gráfico para Windows**, com seleção de ROM e BIOS e botão PLAY.
 - Menu de opções acessível pela tecla **F1**.
