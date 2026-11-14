@@ -33,8 +33,10 @@ Na aba **Cheats** do menu **F1**, você pode liberar os **personagens EX**.
 
 - Windows.
 - Steam em execução para os recursos de Netplay.
-- Imagem **CHD** compatível do jogo, fornecida pelo usuário.
-- BIOS **neocdz.zip** e **neogeo.zip**, fornecidas pelo usuário.
+- Imagem do jogo na versão **World (EnJaEsPt)** para Neo Geo CD, em formato CHD. Use o arquivo `Real Bout Garou Densetsu Special  Real Bout Fatal Fury Special (World) (EnJaEsPt).chd`.
+- BIOS do Neo Geo CD `neocdz.zip` e BIOS do Neo Geo `neogeo.zip`.
+
+Para o jogo funcionar, forneça esses três arquivos e selecione-os no launcher.
 - Componentes de execução compatíveis, conforme a distribuição autorizada.
 
 **ROM/CHD e BIOS não são fornecidas neste repositório.** Use apenas arquivos que você tenha direito de utilizar.
