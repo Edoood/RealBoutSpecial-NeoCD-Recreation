@@ -10,6 +10,8 @@
 
 Na aba **Cheats** do menu **F1**, você pode liberar os **personagens EX**.
 
+**No modo online**, o host (jogador que cria a sala) deve abrir **F1 → Cheats** e selecionar **Liberar personagens EX** antes de criar a sala.
+
 ## Principais diferenciais
 
 - **Widescreen**. Pressione **F4** durante o jogo para ligar ou desligar a tela ampla.
