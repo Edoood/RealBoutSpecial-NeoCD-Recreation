@@ -16,6 +16,12 @@
 - **Launcher gráfico para Windows**, com seleção de ROM e BIOS e botão PLAY.
 - Menu de opções acessível pela tecla **F1**.
 
+## Capturas de tela
+
+![Partida de Real Bout Fatal Fury Special](screenshots/partida.jpg)
+
+![Menu online do Fúria Fatal RBS](screenshots/menu-online.jpg)
+
 ## Requisitos
 
 - Windows.
