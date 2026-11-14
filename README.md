@@ -12,7 +12,7 @@
 - **Músicas da versão Neo Geo CD, com áudio de CD**.
 - **Netplay via Steam** para partidas online.
 - **Placar automático**.
-- **Personagens EX**. Como no console, faça o comando de desbloqueio na tela de ranking. A fala de Geese confirma que o comando funcionou.
+- **Personagens EX**. Na tela de ranking, faça rapidamente **← ↙ ↓ ↘ → ↗ ↑ ↖ ←**. Depois, segure **↖** e aperte **A**, **B** e **C** nessa ordem, mantendo a diagonal pressionada. Geese diz **“Come on!”** quando o comando funciona. As letras correspondem aos botões do Neo Geo. [Guia da versão Neo Geo CD](https://www.consoledatabase.com/cheats/snkneogeocd/realboutfatalfuryspecial/)
 - Salvamento local pelo jogador. O pacote atualizado inicia sem estado pré-carregado.
 - **Launcher gráfico para Windows**, com seleção de ROM e BIOS e botão PLAY.
 - Menu de opções acessível pela tecla **F1**.
