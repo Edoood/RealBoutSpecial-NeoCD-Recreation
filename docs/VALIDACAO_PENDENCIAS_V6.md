@@ -23,3 +23,9 @@ A cópia local de 9.508.638 bytes tem SHA-256 `ed8fc7fa160411aa209cedba0f512ec9a
 O ZIP da V6, o rascunho e o Steam multiplayer foram preservados. A auditoria avançou sobre a amostra exata, com pendências de procedência e permissões ainda abertas.
 
 [Auditoria do ZIP](AUDITORIA_ZIP_ORIGINAL_V6.md) · [Proveniência](PROVENIENCIA_CODIGO_V6.md) · [Microsoft REDIST](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files) · [Banco de controles upstream](https://github.com/mdqinc/SDL_GameControllerDB/blob/master/LICENSE) · [Valve Spacewar](https://partner.steamgames.com/doc/sdk/api/example)
+
+## Árvore de compilação original do núcleo localizada
+
+A saída `NeoGeoCD/core-build/rffs_core.dll` tem o mesmo SHA-256 da DLL da Release, `61a02a4c4ee0150423b5a15180b1652c88793a006a3c8465fc819dce49bc7434`. O cache CMake aponta para a árvore `NeoGeoCD` adjacente e registra clang-cl, Ninja e configuração Release. O arquivo Ninja e o log da compilação estão presentes. A DLL e o log têm a mesma hora de modificação, 31/10/2026 às 20:49:49 UTC. A árvore FBNeo adjacente está no commit `9d82650bb9591966987a4c36ae8a1409ce0d5d68`. O diff dos seis arquivos modificados tem o mesmo identificador Git do patch já publicado no repositório privado, `c90934f7e6c5d14fb16dc3ec2d53e239e1131043`.
+
+Esse achado vincula o núcleo da V6 à árvore de compilação e ao patch recuperado. Ainda não foi feita uma recompilação independente dessa árvore arquivada. O player com SHA-256 idêntico ao da Release foi localizado na pasta da instalação e em uma cópia do pacote, sem a respectiva árvore de compilação. O banco de controles da pasta de desenvolvimento tem SHA-256 idêntico ao do ZIP e indica o upstream no cabeçalho, mas a revisão upstream ainda não foi identificada. As autorizações relativas ao banner, savestate e Steamworks seguem sem comprovação.
